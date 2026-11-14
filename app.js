@@ -23,6 +23,10 @@ let uploaded = null;
 let uploadRequest = 0;
 const themes = Object.entries(wallpaper.themes);
 const artUrl = id => globalThis.WALLPAPER_ART?.[id] ?? "art/" + id + ".jpg";
+const siteUrl = "https://tracyeeee.github.io/good-luck-lockscreen/";
+const exportError = error => error.name === "SecurityError"
+  ? "浏览器限制了此页面导出。请在浏览器中打开好运锁屏网站后重试。"
+  : error.message;
 
 function choices(target, name, entries, selected) {
   target.replaceChildren();
@@ -253,7 +257,8 @@ async function previewArtwork(art, theme) {
     },"image/png");
   } catch (error) {
     if (version !== artPreviewVersion || !artDialog.open) return;
-    artStatus.textContent = error.message;
+    artStatus.textContent = exportError(error);
+    artStatus.hidden = false;
   }
 }
 
@@ -324,18 +329,23 @@ function paintTarot(ctx,image,w,h) {
   ctx.restore();
 }
 
-function loadImage(theme) {
-  if (images.has(theme)) return images.get(theme);
+function loadImage(id) {
+  if (images.has(id)) return images.get(id);
   const image = new Image();
+  // Request readable pixels even when the page runs in a sandboxed browser frame.
+  image.crossOrigin = "anonymous";
+  const source = new URL(artUrl(id),document.baseURI);
+  const localFile = source.protocol === "file:";
   const promise = new Promise((resolve,reject) => {
     image.onload = () => resolve(image);
     image.onerror = () => {
-      images.delete(theme);
-      reject(new Error("底图加载失败，请刷新后重试。"));
+      images.delete(id);
+      reject(new Error(localFile ? "底图加载失败，请联网后重试，或直接打开好运锁屏网站。"
+        : "底图加载失败，请刷新后重试。"));
     };
   });
-  images.set(theme,promise);
-  image.src = artUrl(theme);
+  images.set(id,promise);
+  image.src = localFile ? new URL("art/" + id + ".jpg",siteUrl).href : source.href;
   return promise;
 }
 
@@ -411,8 +421,10 @@ function motif(ctx,w,h,shape,color,opacity) {
 }
 
 function paint(target, image, recipe, withText) {
-  const ctx = target.getContext("2d", {alpha:false});
   const {width:w,height:h} = target;
+  // Reset the bitmap so earlier draws cannot taint later exports.
+  target.width = w;
+  const ctx = target.getContext("2d", {alpha:false});
   const scale = Math.max(w/image.width,h/image.height) * (recipe.style.zoom + recipe.variation.zoom);
   const iw = image.width*scale, ih = image.height*scale;
   const crop = recipe.upload?.crop;
@@ -512,8 +524,7 @@ async function render() {
 }
 
 function showRenderError(error) {
-  const status = get("download-status");
-  status.textContent = error.name === "SecurityError" ? "浏览器限制了本地图片导出，请从站点或本地服务打开。" : error.message;
+  get("download-status").textContent = exportError(error);
 }
 
 function readInput() {
@@ -554,7 +565,7 @@ async function generate(input, {preview = false} = {}) {
       state.withText = previousWithText;
       toggleText();
     }
-    get("error").textContent = problem.message;
+    get("error").textContent = exportError(problem);
     get("error").hidden = false;
     showRenderError(problem);
   } finally {
