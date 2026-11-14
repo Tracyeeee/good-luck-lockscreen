@@ -89,7 +89,10 @@ form.addEventListener("input", event => {
   if (!event.target.closest("#suggestion")) clearSuggestion();
 });
 form.addEventListener("change", event => {
-  if (event.target.name === "theme") configureTheme(event.target.value);
+  if (event.target.name === "theme") {
+    configureTheme(event.target.value);
+    generate(readInput(),{preview:true});
+  }
   if (event.target.name === "reference") updateReferenceSummary();
   get("birth-time-field").hidden = !get("birth").value;
   get("birth-zone-field").hidden = !get("birth").value || !get("birth-time").value;
@@ -211,7 +214,7 @@ get("art-customize").addEventListener("click", () => {
   const radio = Array.from(form.elements.theme).find(input => input.value === theme);
   radio.checked = true;
   configureTheme(theme,art.id);
-  clearSuggestion();
+  generate(readInput(),{preview:true});
   closeArtwork();
   radio.scrollIntoView({block:"nearest",inline:"nearest",behavior:"instant"});
   get("studio").scrollIntoView();
@@ -521,8 +524,9 @@ function readInput() {
   };
 }
 
-async function generate(input) {
-  if (get("generate").disabled) return;
+async function generate(input, {preview = false} = {}) {
+  const button = get("generate");
+  if (!preview && button.disabled) return;
   clearSuggestion();
   const previousInput = state.input;
   const previousVariation = state.variation;
@@ -531,23 +535,30 @@ async function generate(input) {
   state.variation = 0;
   state.withText = false;
   toggleText();
-  get("generate").disabled = true;
+  if (preview) get("preview-status").textContent = "预览";
+  else button.disabled = true;
   get("error").hidden = true;
+  const pending = render();
+  const version = state.renderId;
   try {
-    await render();
+    await pending;
+    if (preview || version !== state.renderId) return;
     get("preview-status").textContent = "已生成";
     if (matchMedia("(max-width: 680px)").matches) get("result").scrollIntoView({block:"start"});
     get("result").focus({preventScroll:true});
   } catch (problem) {
-    state.input = previousInput;
-    state.variation = previousVariation;
-    state.withText = previousWithText;
-    toggleText();
+    if (version !== state.renderId) return;
+    if (!preview) {
+      state.input = previousInput;
+      state.variation = previousVariation;
+      state.withText = previousWithText;
+      toggleText();
+    }
     get("error").textContent = problem.message;
     get("error").hidden = false;
     showRenderError(problem);
   } finally {
-    get("generate").disabled = false;
+    if (!preview) button.disabled = false;
   }
 }
 
