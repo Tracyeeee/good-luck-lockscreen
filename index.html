@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#121021">
 <meta name="description" content="选择你的心愿，生成一张专属手机锁屏。">
 <title>好运锁屏 · 为此刻的心愿做一张壁纸</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <script src="vendor/lunar.js" defer></script>
 <script src="bazi.js?v=3" defer></script>
-<script src="wallpaper.js?v=3" defer></script>
-<script src="app.js?v=3" defer></script>
+<script src="wallpaper.js?v=4" defer></script>
+<script src="app.js?v=4" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -124,8 +124,8 @@
           <ul id="result-details" class="result-details" hidden></ul>
         </div>
         <div class="result-actions">
-          <div class="switcher" role="group" aria-label="壁纸文字"><button id="with-text" type="button" aria-pressed="true">有字</button><button id="without-text" type="button" aria-pressed="false">无字</button></div>
-          <button id="variation" class="button quiet" type="button">换一张图</button>
+          <div class="switcher" role="group" aria-label="壁纸文字"><button id="with-text" type="button" aria-pressed="false">有字</button><button id="without-text" type="button" aria-pressed="true">无字</button></div>
+          <button id="variation" class="button quiet" type="button" aria-describedby="variation-count">换一张图</button><span id="variation-count" class="variation-count"></span>
           <a id="download" class="button secondary" download="好运锁屏.png">下载壁纸 <span aria-hidden="true">↓</span></a>
         </div>
         <p id="download-status" class="download-status" role="status">PNG · 1080 × 2400</p>
@@ -133,7 +133,7 @@
     </div>
   </section>
   <section class="shell gallery" id="gallery" aria-labelledby="gallery-title">
-    <div class="section-heading"><div><div class="eyebrow"><span aria-hidden="true">✧</span> 壁纸灵感</div><h2 id="gallery-title">从喜欢的画面开始</h2></div><p>选择一张，定制你的版本</p></div>
+    <div class="section-heading"><div><div class="eyebrow"><span aria-hidden="true">✧</span> 壁纸灵感</div><h2 id="gallery-title">从喜欢的画面开始</h2></div><p>点开大图，可直接下载</p></div>
     <div class="gallery-filters">
       <div id="style-filter" class="chips" role="group" aria-label="按风格浏览"></div>
       <div class="field gallery-intent"><label for="intent-filter">按心愿筛选</label><select id="intent-filter"><option value="">全部心愿</option></select></div>
@@ -141,6 +141,24 @@
     <div id="gallery-cards" class="gallery-grid"></div>
     <p id="gallery-empty" class="field-note" role="status" hidden>这个风格暂时没有对应心愿的壁纸。</p>
   </section>
+  <dialog id="art-dialog" class="art-dialog" aria-labelledby="art-title">
+    <div class="art-dialog-content">
+      <button id="art-close" class="button quiet art-close" type="button" aria-label="关闭大图" autofocus>×</button>
+      <div class="art-preview">
+        <canvas id="art-canvas" width="1080" height="2400" role="img"></canvas>
+        <p id="art-status" class="art-status" role="status" hidden></p>
+      </div>
+      <div class="art-details">
+        <h2 id="art-title"></h2>
+        <p id="art-description"></p>
+        <div class="art-actions">
+          <a id="art-download" class="button secondary" download>下载壁纸 <span aria-hidden="true">↓</span></a>
+          <button id="art-customize" class="button quiet" type="button">用这张定制</button>
+        </div>
+        <p class="field-note">PNG · 1080 × 2400 · 无叠加文字</p>
+      </div>
+    </div>
+  </dialog>
 </main>
 <footer class="site-footer"><div class="shell"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">✦</span>好运锁屏</a><span>把心愿留在每天都会看到的地方</span></div></footer>
 </body>

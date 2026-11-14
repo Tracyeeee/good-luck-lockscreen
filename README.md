@@ -2,7 +2,7 @@
 
 手机壁纸生成网页。打开 [GitHub Pages](https://tracyeeee.github.io/good-luck-lockscreen/)，或在项目目录运行 `python -m http.server 8765 --bind 127.0.0.1` 后访问 [本地预览](http://127.0.0.1:8765/)。
 
-默认选择心愿即可生成。自定义画面可换底图、上传图片、补充心愿或调整氛围。可下载有字或无字的 1080 × 2400 PNG。
+默认选择心愿即可生成。自定义画面可换底图、上传图片、补充心愿或调整氛围。默认生成无字壁纸，选择「有字」后可加入心愿短句。下载尺寸为 1080 × 2400 PNG。
 
 
 ## 图片来源
@@ -29,9 +29,24 @@
 
 ## 图库与配图规则
 
-图库有 19 张底图，按视觉风格浏览，也可按心愿筛选。塔罗牌保留完整牌框，构图为手机锁屏时钟留出空间。
+图库有 31 张底图，正缘和财富各有 8 张。「换一张图」会依次遍历同心愿的底图。壁纸灵感可按风格和心愿筛选，点图可在原处看大图和下载，也可用这张图定制。塔罗牌保留完整牌框，原画的题跋和牌名随画面保留。
 
 - [韦特塔罗牌面](https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck)，Pamela Colman Smith。七张采用 Wikimedia Commons 标注为公有领域的历史牌面，其中[力量牌](https://commons.wikimedia.org/wiki/File:Strength,_Waite-Smith_Tarot_Deck,_Yale_University.jpg)来自耶鲁馆藏扫描件。
 - 欧式复古来自克利夫兰艺术博物馆开放馆藏，[哥特回廊](https://www.clevelandart.org/art/1980.218)和[窗前来信](https://www.clevelandart.org/art/2017.217)，CC0。
 
-[供应的 lunar-javascript 1.7.8](https://github.com/6tail/lunar-javascript/tree/5c92e62c904ba5cc0b62f032796aeef433702268)以 MIT 许可随附在 `vendor/`。节气使用 UTC+8 口径，日柱与时柱使用出生地民用时间，晚子日柱按当天。出生时区由用户选择，夏令时重复或不存在的钟表时间可改用生日建议。只填生日用公历当日日干。填写时间后，以月支加权及旺衰阈值给出简化扶抑候选五行，参考[规则声明](https://github.com/qilaidev/metaphysics-engine/blob/0536f4e12ea8dbc3f81263e7f5d9170109789e84/backend/constants/rulings.js)。中和及疑似从格、专旺格返回空候选。星座及五行只在用户确认后用于生成，出生资料在浏览器内计算。
+- 正缘和财富底图也使用克利夫兰艺术博物馆开放馆藏，CC0。[芍药相映](https://www.clevelandart.org/art/1967.192)、[墨色桃枝](https://www.clevelandart.org/art/1941.290)、[墨鲤跃水](https://www.clevelandart.org/art/1977.55)、[层泉汇流](https://www.clevelandart.org/art/1982.40)。
+
+## 正缘和财富新增原创底图
+
+使用内置 ImageGen 生成。
+
+- [love-swans.jpg](art/love-swans.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. Two white swans quietly swimming toward one another on a pale rose and lilac dawn lake, their subtly intersecting reflections, distant willow silhouettes, tiny soft ripples. Refined atmospheric fine art photography. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [love-thread.jpg](art/love-thread.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. A single elegant vermilion silk cord with two loosely curving ends that meet at one graceful Chinese knot, resting diagonally on warm ivory translucent xuan paper, tiny pink peach petals at lower edge. Contemporary Chinese still life inspired by the red thread of fate, realistic silk fibers, soft sun from a window, restrained composition. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [love-moon.jpg](art/love-moon.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. Two small carved jade lovebirds sitting side by side on a dark flowering branch, large hazy pearlescent moon slightly below midline and soft mauve-blue night mist, cinematic Asian fairytale editorial look, exquisite and restrained, midnight blue and pale rose. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [love-cups.jpg](art/love-cups.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. Two delicate porcelain cups on a wooden table catch the same window sunlight with quiet rippled tea and a scattering of pink petals. Contemporary editorial photography, softly lit ivory and dusty pink, tactile, affectionate and everyday. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [wealth-oranges.jpg](art/wealth-oranges.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. A sunlit orange tree branch full of ripe golden mandarin oranges with glossy green foliage, a few small golden bokeh lights in a hazy muted jade garden. Premium editorial photography, warm gold and deep olive, rich tangible detail, theme of fruitful accumulation. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [wealth-coins.jpg](art/wealth-coins.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. A small group of antique Chinese round bronze fortune coins with square holes lies on dark crimson silk, delicate amber reflected light picks out the edges, ornate yet simple, stylized realistic luxury Chinese still life. No readable markings on the coins. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [wealth-harvest.jpg](art/wealth-harvest.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. Slender luminous golden rice stalks bending with full ripe grains in a secluded field at blue hour. Close, tactile, subtle painterly atmospheric photography. Amber kernels and navy-purple shadow. Theme of harvesting the results of steady work. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+- [wealth-water.jpg](art/wealth-water.jpg) · Create one full-bleed very tall 9:20 premium mobile lock-screen wallpaper. A clear ribbon of water cascading through an emerald garden fountain into a still jade basin, ripples catch delicate glints of gold; moss, dark green shade and soft sunlight. Premium cinematic editorial photography, theme of steady flow and growing abundance. Place the main subjects in the middle and lower part of the frame, calm low-detail upper 25% for the lockscreen clock, no collages. Absolutely no text, lettering, typography, layout mockup, logos, device, frame or watermark.
+
+[随附的 lunar-javascript 1.7.8](https://github.com/6tail/lunar-javascript/tree/5c92e62c904ba5cc0b62f032796aeef433702268)以 MIT 许可随附在 `vendor/`。节气使用 UTC+8 口径，日柱与时柱使用出生地民用时间，晚子日柱按当天。出生时区由用户选择，夏令时重复或不存在的钟表时间可改用生日建议。只填生日用公历当日日干。填写时间后，以月支加权及旺衰阈值给出简化扶抑候选五行，参考[规则声明](https://github.com/qilaidev/metaphysics-engine/blob/0536f4e12ea8dbc3f81263e7f5d9170109789e84/backend/constants/rulings.js)。中和及疑似从格、专旺格返回空候选。星座及五行只在用户确认后用于生成，出生资料在浏览器内计算。

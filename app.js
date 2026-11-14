@@ -12,7 +12,7 @@ get("phone-date").textContent = new Intl.DateTimeFormat("zh-CN", {
   month:"long", day:"numeric", weekday:"long", timeZone:"Asia/Shanghai",
 }).format(new Date());
 get("birth").max = date;
-const state = {input:null, recipe:null, withText:true, variation:0, url:null, renderId:0};
+const state = {input:null, recipe:null, withText:false, variation:0, url:null, renderId:0};
 const images = new Map();
 let suggestion = null;
 let suggestionVersion = 0;
@@ -179,6 +179,78 @@ get("crop").addEventListener("change", () => {
   state.input.upload = {...state.input.upload,crop:Number(get("crop").value)/100};
   render().catch(showRenderError);
 });
+const artDialog = get("art-dialog");
+const artCanvas = get("art-canvas");
+const artDownload = get("art-download");
+const artStatus = get("art-status");
+let activeArtwork = null;
+let artPreviewVersion = 0;
+let artPreviewUrl = null;
+
+function closeArtwork() {
+  ++artPreviewVersion;
+  if (artPreviewUrl) URL.revokeObjectURL(artPreviewUrl);
+  artPreviewUrl = null;
+  activeArtwork = null;
+  artDownload.removeAttribute("href");
+  artDialog.close();
+}
+
+get("art-close").addEventListener("click", closeArtwork);
+artDialog.addEventListener("cancel", event => {
+  event.preventDefault();
+  closeArtwork();
+});
+artDialog.addEventListener("click", event => {
+  if (event.target === artDialog) closeArtwork();
+});
+get("art-customize").addEventListener("click", () => {
+  const {art,theme} = activeArtwork;
+  const radio = Array.from(form.elements.theme).find(input => input.value === theme);
+  radio.checked = true;
+  configureTheme(theme,art.id);
+  clearSuggestion();
+  closeArtwork();
+  get("studio").scrollIntoView();
+  get("generate").focus({preventScroll:true});
+});
+
+async function previewArtwork(art, theme) {
+  activeArtwork = {art,theme};
+  const version = ++artPreviewVersion;
+  get("art-title").textContent = art.name;
+  get("art-description").textContent = art.description;
+  artCanvas.setAttribute("aria-label",art.name + "壁纸大图");
+  artCanvas.hidden = true;
+  artStatus.textContent = "正在加载大图…";
+  artStatus.hidden = false;
+  artDownload.removeAttribute("href");
+  artDialog.showModal();
+
+  try {
+    const image = await loadImage(art.id);
+    if (version !== artPreviewVersion || !artDialog.open) return;
+    const recipe = wallpaper.build({theme,reference:art.id,style:"soft",wish:"",variation:0});
+    paint(artCanvas,image,recipe,false);
+    artCanvas.hidden = false;
+    artStatus.hidden = true;
+    artCanvas.toBlob(blob => {
+      if (version !== artPreviewVersion || !artDialog.open) return;
+      if (blob) {
+        artPreviewUrl = URL.createObjectURL(blob);
+        artDownload.href = artPreviewUrl;
+        artDownload.download = "好运锁屏-" + art.name + "-无字.png";
+      } else {
+        artStatus.textContent = "图片导出失败，请重新打开大图。";
+        artStatus.hidden = false;
+      }
+    },"image/png");
+  } catch (error) {
+    if (version !== artPreviewVersion || !artDialog.open) return;
+    artStatus.textContent = error.message;
+  }
+}
+
 const gallery = get("gallery-cards");
 let galleryStyle = "";
 for (const [id,name] of [["","全部"],...Object.entries(wallpaper.galleryStyles)]) {
@@ -223,12 +295,7 @@ function showGallery() {
     button.append(image,caption);
     button.addEventListener("click", () => {
       const theme = art.tag !== tag && tag && art.extra ? art.extra : art.theme;
-      const radio = Array.from(form.elements.theme).find(input => input.value === theme);
-      radio.checked = true;
-      configureTheme(theme,art.id);
-      clearSuggestion();
-      get("studio").scrollIntoView();
-      get("generate").focus({preventScroll:true});
+      previewArtwork(art,theme);
     });
     gallery.append(button);
   }
@@ -421,6 +488,8 @@ async function render() {
   }));
   details.hidden = !recipe.details.length;
   get("variation").textContent = recipe.upload ? "换一种效果" : "换一张图";
+  const count = wallpaper.references(recipe.theme).length;
+  get("variation-count").textContent = recipe.upload ? "" : (state.variation+1) + " / " + count;
   get("result-title").textContent = recipe.phrase;
   get("result-reason").textContent = recipe.reason;
   canvas.setAttribute("aria-label", recipe.name + "锁屏壁纸，" + recipe.phrase);
@@ -456,8 +525,11 @@ async function generate(input) {
   clearSuggestion();
   const previousInput = state.input;
   const previousVariation = state.variation;
+  const previousWithText = state.withText;
   state.input = input;
   state.variation = 0;
+  state.withText = false;
+  toggleText();
   get("generate").disabled = true;
   get("error").hidden = true;
   try {
@@ -468,6 +540,8 @@ async function generate(input) {
   } catch (problem) {
     state.input = previousInput;
     state.variation = previousVariation;
+    state.withText = previousWithText;
+    toggleText();
     get("error").textContent = problem.message;
     get("error").hidden = false;
     showRenderError(problem);
@@ -494,7 +568,7 @@ async function previewSuggestion() {
     const recipe = wallpaper.build({...input,variation:0});
     const image = recipe.upload?.image ?? await loadImage(recipe.art.id);
     if (version !== suggestionVersion) return;
-    paint(get("suggestion-preview"),image,recipe,state.withText);
+    paint(get("suggestion-preview"),image,recipe,false);
     summary.textContent = "底图「" + recipe.art.name + "」。" + (recipe.details.join("") || "你可以仅按心愿生成。");
     apply.disabled = recipe.details.length === 0;
   } catch (error) {
@@ -548,11 +622,9 @@ for (const [id,flag] of [["with-text",true],["without-text",false]]) {
     if (state.withText === flag) return;
     state.withText = flag;
     toggleText();
-    if (suggestion) previewSuggestion();
     render().catch(showRenderError);
   });
 }
 
 state.input = readInput();
 render().catch(showRenderError);
-

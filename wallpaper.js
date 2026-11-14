@@ -45,6 +45,18 @@ const wallpaper = (() => {
     {"id":"career-dawn","name":"中国尊晨光","style":"urban","theme":"career","stage":0,"tag":"求职机会","elements":"火土","description":"晨光照亮高楼，寓意新的机会。"},
     {"id":"career-interview","name":"中国尊仰视","style":"urban","theme":"career","stage":1,"tag":"面试自信","elements":"金水","description":"清晰的建筑线条，适合为面试集中注意力。"},
     {"id":"career-night","name":"中国尊夜景","style":"urban","theme":"career","stage":2,"tag":"等好消息","elements":"水金","description":"深蓝夜色里的一盏光，适合等消息时。"},
+    {"id":"love-swans","name":"晨雾双天鹅","style":"modern","theme":"love","stage":1,"tag":"感情","elements":"水金","description":"相向而游的天鹅，寓意双向靠近。"},
+    {"id":"love-thread","name":"一线相逢","style":"chinese","theme":"love","stage":0,"tag":"感情","elements":"火土","description":"相接的红线，寓意相遇与牵挂。"},
+    {"id":"love-moon","name":"月下双栖","style":"chinese","theme":"love","stage":1,"tag":"感情","elements":"水木","description":"两只玉鸟并肩停在花枝上，寓意安稳相伴。"},
+    {"id":"love-cups","name":"两盏茶","style":"modern","theme":"love","stage":1,"tag":"感情","elements":"土金","description":"同一束光照着两盏茶，寓意日常相伴。"},
+    {"id":"love-peony","name":"芍药相映","style":"chinese","theme":"love","stage":0,"tag":"感情","elements":"木土","description":"相映的芍药，寓意彼此欣赏。"},
+    {"id":"love-ink-peach","name":"墨色桃枝","style":"chinese","theme":"love","stage":2,"tag":"感情","elements":"木火","description":"淡墨里点缀桃红，寓意为新相识留出空间。"},
+    {"id":"wealth-oranges","name":"金橘满枝","style":"chinese","theme":"wealth","stage":2,"tag":"财富","elements":"木金","description":"枝头结满金橘，寓意积累渐有收成。"},
+    {"id":"wealth-coins","name":"红绸铜钱","style":"chinese","theme":"wealth","stage":0,"tag":"财富","elements":"金火","description":"红绸上的铜钱，寓意守住一点一滴的积累。"},
+    {"id":"wealth-harvest","name":"金穗丰收","style":"modern","theme":"wealth","stage":2,"tag":"财富","elements":"土金","description":"成熟的稻穗，寓意踏实投入有了收成。"},
+    {"id":"wealth-water","name":"碧泉聚流","style":"modern","theme":"wealth","stage":1,"tag":"财富","elements":"水木","description":"清泉汇入水池，寓意新的机会慢慢汇聚。"},
+    {"id":"wealth-carp","name":"墨鲤跃水","style":"chinese","theme":"wealth","stage":1,"tag":"财富","elements":"水土","description":"跃起的墨鲤，寓意稳步向前。"},
+    {"id":"wealth-cascade","name":"层泉汇流","style":"vintage","theme":"wealth","stage":1,"tag":"财富","elements":"水土","description":"山间水流层层汇合，寓意涓滴成流。"},
   ];
 
   function references(theme) {
@@ -112,7 +124,7 @@ const wallpaper = (() => {
     const details = [];
     if (star) details.push(star.label + " · 加入" + star.detail + "。");
     if (element) details.push((input.personal.mode === "day" ? "日干五行灵感" : "八字配图建议 · 简化扶抑") +
-      " · " + element.label + "，加入" + element.detail + "和对应的短句色。");
+      " · " + element.label + "，加入" + element.detail + "，开启有字时使用对应的短句色。");
     return {
       theme:input.theme, name:theme.name, phrase:stage[1], reason:art.description, details, art, upload,
       color:stage[3], motif:stage[4], wish, style:styles[input.style], star, element, variation, seed:hash(wish),
@@ -122,4 +134,3 @@ const wallpaper = (() => {
   return {themes, styles, zodiac, artworks, galleryStyles, references, build};
 })();
 if (typeof module === "object" && module.exports) module.exports = wallpaper;
-
