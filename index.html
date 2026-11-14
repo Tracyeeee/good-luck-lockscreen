@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#121021">
 <meta name="description" content="选择你的心愿，生成一张专属手机锁屏。">
 <title>好运锁屏 · 为此刻的心愿做一张壁纸</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 <script src="vendor/lunar.js" defer></script>
 <script src="bazi.js?v=3" defer></script>
-<script src="wallpaper.js?v=4" defer></script>
-<script src="app.js?v=4" defer></script>
+<script src="wallpaper.js?v=5" defer></script>
+<script src="app.js?v=5" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -32,7 +32,7 @@
       <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
       <span class="spark spark-one">✦</span><span class="spark spark-two">✧</span><span class="spark spark-three">✦</span>
       <figure class="poster poster-love"><img src="art/love.jpg" alt=""><figcaption>遇见正缘</figcaption></figure>
-      <figure class="poster poster-wealth"><img src="art/wealth.jpg" alt=""><figcaption>丰盛积累</figcaption></figure>
+      <figure class="poster poster-wealth"><img src="art/wealth.jpg" alt=""><figcaption>财富积累</figcaption></figure>
       <figure class="poster poster-career"><img src="art/career.jpg" alt=""><figcaption>接心仪 Offer</figcaption></figure>
     </div>
   </section>
@@ -40,7 +40,7 @@
     <div class="section-heading"><div><div class="eyebrow"><span aria-hidden="true">✧</span> 壁纸制作</div><h2 id="studio-title">你最近想迎来什么？</h2></div><p>从一个心愿开始</p></div>
     <div class="workbench">
       <form id="wish-form" class="panel form-panel">
-        <fieldset><legend>选择心愿</legend><div id="themes" class="theme-grid"></div></fieldset>
+        <fieldset><legend>选择心愿 <small class="theme-swipe">左右滑动查看更多</small></legend><div id="themes" class="theme-grid"></div></fieldset>
         <button id="generate" class="button primary generate" type="submit" formnovalidate>✦ <span>生成我的壁纸</span><span class="button-arrow" aria-hidden="true">↗</span></button>
         <p id="error" class="error" role="alert" hidden></p>
         <details id="customize" class="options">
@@ -48,7 +48,7 @@
           <div class="options-body">
             <div class="field">
               <label for="wish">我的具体心愿 <small>选填</small></label>
-              <input id="wish" name="wish" type="text" placeholder="比如，终面结束，正在等消息" maxlength="80">
+              <input id="wish" name="wish" type="text" maxlength="80">
             </div>
             <fieldset class="reference-section">
               <legend>选择壁纸底图</legend>

@@ -21,6 +21,7 @@ const uploadStatus = get("upload-status");
 const uploadHint = uploadStatus.textContent;
 let uploaded = null;
 let uploadRequest = 0;
+const themes = Object.entries(wallpaper.themes);
 const artUrl = id => globalThis.WALLPAPER_ART?.[id] ?? "art/" + id + ".jpg";
 
 function choices(target, name, entries, selected) {
@@ -47,6 +48,7 @@ function choices(target, name, entries, selected) {
 }
 
 function configureTheme(theme, selected = "auto") {
+  get("wish").placeholder = wallpaper.themes[theme].example;
   const references = get("references");
   references.replaceChildren();
   get("reference-auto").checked = selected === "auto";
@@ -77,7 +79,7 @@ function updateReferenceSummary() {
     : wallpaper.artworks.find(art => art.id === id)?.name ?? "选图、上传或调整氛围";
 }
 
-choices(get("themes"), "theme", Object.entries(wallpaper.themes).map(([key,item]) => [key,item.name,item.icon]), "career");
+choices(get("themes"), "theme", themes.map(([key,item]) => [key,item.name,item.icon]), "career");
 choices(get("styles"), "style", Object.entries(wallpaper.styles).map(([key,item]) => [key,item.name]), "soft");
 configureTheme("career");
 get("zodiac").add(new Option("请选择", ""));
@@ -211,6 +213,7 @@ get("art-customize").addEventListener("click", () => {
   configureTheme(theme,art.id);
   clearSuggestion();
   closeArtwork();
+  radio.scrollIntoView({block:"nearest",inline:"nearest",behavior:"instant"});
   get("studio").scrollIntoView();
   get("generate").focus({preventScroll:true});
 });
@@ -266,18 +269,19 @@ for (const [id,name] of [["","全部"],...Object.entries(wallpaper.galleryStyles
   });
   get("style-filter").append(option);
 }
-for (const tag of new Set(wallpaper.artworks.flatMap(art => art.extra ? [art.tag, art.extra === "wealth" ? "财富" : "行动力"] : [art.tag]))) {
-  get("intent-filter").add(new Option(tag,tag));
+for (const [id,theme] of themes) {
+  get("intent-filter").add(new Option(theme.name,id));
 }
 get("intent-filter").addEventListener("change",showGallery);
 showGallery();
 
 function showGallery() {
-  const tag = get("intent-filter").value;
-  const options = wallpaper.artworks.filter(art => (!galleryStyle || art.style === galleryStyle)
-    && (!tag || art.tag === tag || (tag === "行动力" && art.extra === "energy") || (tag === "财富" && art.extra === "wealth")));
+  const filter = get("intent-filter").value;
+  const pool = filter ? wallpaper.references(filter) : wallpaper.artworks;
+  const options = galleryStyle ? pool.filter(art => art.style === galleryStyle) : pool;
   gallery.replaceChildren();
   for (const art of options) {
+    const theme = filter || art.theme;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "gallery-card" + (art.style === "tarot" ? " tarot-card" : "");
@@ -290,13 +294,10 @@ function showGallery() {
     const title = document.createElement("strong");
     title.textContent = art.name;
     const use = document.createElement("small");
-    use.textContent = art.tag === tag || !tag ? art.tag : tag;
+    use.textContent = wallpaper.themes[theme].name;
     caption.append(title,use);
     button.append(image,caption);
-    button.addEventListener("click", () => {
-      const theme = art.tag !== tag && tag && art.extra ? art.extra : art.theme;
-      previewArtwork(art,theme);
-    });
+    button.addEventListener("click", () => previewArtwork(art,theme));
     gallery.append(button);
   }
   get("gallery-empty").hidden = options.length > 0;
