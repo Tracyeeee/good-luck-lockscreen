@@ -1,8 +1,9 @@
 # 好运锁屏
 
-手机壁纸生成网页。网站部署在 [GitHub Pages](https://tracyeeee.github.io/good-luck-lockscreen/)。在项目目录运行 `python -m http.server 8765 --bind 127.0.0.1`，然后访问 [本地预览](http://127.0.0.1:8765/)。
+手机壁纸生成网页。打开 [GitHub Pages](https://tracyeeee.github.io/good-luck-lockscreen/)，或在项目目录运行 `python -m http.server 8765 --bind 127.0.0.1` 后访问 [本地预览](http://127.0.0.1:8765/)。
 
-接 Offer 有七张原创底图，包括晨光之门、清晰阶梯、等一封好消息和四种中国尊场景。可以按求职阶段推荐、手动选图或上传自己的参考图。上传图作为底图，支持调整裁切位置。目标岗位影响线条与光色，太阳星座影响光线方向，五行图案按公历出生日期的日干选择，使用民用日期零点换日。今日与本周提供轮换的视觉主题。输入在浏览器内处理。
+默认选择心愿即可生成。自定义画面可换底图、上传图片、补充心愿或调整氛围。可下载有字或无字的 1080 × 2400 PNG。
+
 
 ## 图片来源
 
@@ -13,7 +14,7 @@
 - [wealth.jpg](art/wealth.jpg) · A premium phone wallpaper, two rich crimson and gold koi in a quiet deep teal ink pond, their forms like a slow rising curve around a luminous pale lotus, a handful of gold light reflections, finely detailed scales. Refined contemporary Chinese cinematic illustration with real texture, uncluttered, deep atmospheric color. Very tall vertical, main koi and lotus lower middle, upper quarter quiet dark water. No words, no device, no border.
 - [energy.jpg](art/energy.jpg) · Fine-art cinematic landscape photograph for a premium phone lockscreen, a tiny path threading through misty amethyst mountain ridges up toward a warm dawn, deep indigo spruce silhouettes in foreground, soft pale amber band, fine atmospheric texture. Very tall vertical full bleed, main visual in lower middle, upper quarter calm hazy sky. No text, no device, no border.
 
-五行日干以 2026 年 11 月 11 日己丑为校验基准。 [香港天文台 2026 年年历](https://www.hko.gov.hk/tc/gts/astron2026/files/HKO_almanac_2026.pdf)
+
 
 ## Offer 新增底图
 
@@ -25,3 +26,12 @@
 - [career-door.jpg](art/career-door.jpg) · A sophisticated very tall vertical phone lock screen artwork, 9:20. Photorealistic cinematic minimalist architecture interior. A single elegant tall doorway stands half open at the end of a muted dark navy hallway, soft golden morning light beyond, a long amber beam across the terrazzo floor. Theme of new opportunity for someone applying for jobs. Center-lower composition, quiet indigo plaster wall and subtle glow in upper quarter for the clock, depth and subtle grain, timeless editorial style. No text, no people, no device, no logo, no frame.
 - [career-steps.jpg](art/career-steps.jpg) · A luxury editorial architecture photo for a 9:20 phone wallpaper. Clean sculptural pale travertine steps rise diagonally across the lower and middle part of the frame to a crisp stripe of soft daylight. Modern minimalist building interior with one diagonal line, deep blue lilac shadows and pale warm highlights, calm matte deep grey-lavender wall and negative space in top quarter for lock screen clock. Theme: clarity and composure just before an important interview. No text or people, no frame, no watermark.
 - [career-letter.jpg](art/career-letter.jpg) · Refined still life photography for a very tall 9:20 mobile wallpaper. A beautiful closed ivory envelope on a dark plum tabletop with an oblique band of warm window light, faint reflections, slight lavender twilight, almost tactile handmade paper fibers. Subtly hopeful, anticipation of a welcome job offer. Frame the envelope in the lower middle about 66 percent down, leave the upper quarter dark soft mauve and completely calm for a lockscreen clock. No words, no letter markings, no logos, no device, no frame.
+
+## 图库与配图规则
+
+图库有 19 张底图，按视觉风格浏览，也可按心愿筛选。塔罗牌保留完整牌框，构图为手机锁屏时钟留出空间。
+
+- [韦特塔罗牌面](https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck)，Pamela Colman Smith。七张采用 Wikimedia Commons 标注为公有领域的历史牌面，其中[力量牌](https://commons.wikimedia.org/wiki/File:Strength,_Waite-Smith_Tarot_Deck,_Yale_University.jpg)来自耶鲁馆藏扫描件。
+- 欧式复古来自克利夫兰艺术博物馆开放馆藏，[哥特回廊](https://www.clevelandart.org/art/1980.218)和[窗前来信](https://www.clevelandart.org/art/2017.217)，CC0。
+
+[供应的 lunar-javascript 1.7.8](https://github.com/6tail/lunar-javascript/tree/5c92e62c904ba5cc0b62f032796aeef433702268)以 MIT 许可随附在 `vendor/`。节气使用 UTC+8 口径，日柱与时柱使用出生地民用时间，晚子日柱按当天。出生时区由用户选择，夏令时重复或不存在的钟表时间可改用生日建议。只填生日用公历当日日干。填写时间后，以月支加权及旺衰阈值给出简化扶抑候选五行，参考[规则声明](https://github.com/qilaidev/metaphysics-engine/blob/0536f4e12ea8dbc3f81263e7f5d9170109789e84/backend/constants/rulings.js)。中和及疑似从格、专旺格返回空候选。星座及五行只在用户确认后用于生成，出生资料在浏览器内计算。

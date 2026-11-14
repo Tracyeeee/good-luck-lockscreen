@@ -24,26 +24,32 @@ const wallpaper = (() => {
     ], examples:[/开始|行动|拖延/, /恢复|节奏|坚持/, /安定|放松|焦虑|休息/]},
   };
 
-  const careerReferences = [
-    {id:"career-door", name:"晨光之门", description:"门后的晨光象征刚打开的机会。"},
-    {id:"career-steps", name:"清晰阶梯", description:"光线照亮下一阶，呼应面试时清楚地表达自己。"},
-    {id:"career-letter", name:"等一封好消息", description:"暖光落在信封上，留给正在等待回音的人。"},
-    {id:"career", name:"中国尊倒影", description:"中国尊在水中的倒影，呼应对 Offer 回音的期待。"},
-    {id:"career-dawn", name:"中国尊晨光", description:"晨光照亮高楼和街道，呼应开启下一段工作旅程。"},
-    {id:"career-interview", name:"中国尊仰视", description:"玻璃幕墙的线条向上收拢，画面利落、专注。"},
-    {id:"career-night", name:"中国尊夜景", description:"深蓝夜色里保留一盏暖光，寄托等消息时的期待。"},
+  const galleryStyles = {chinese:"中式意象", tarot:"塔罗牌", vintage:"欧式复古", urban:"都市摄影", modern:"现代意象"};
+  const artworks = [
+    {"id":"career-door","name":"晨光之门","style":"modern","theme":"career","stage":0,"tag":"求职机会","elements":"火土","description":"门后的晨光，寓意机会开启。"},
+    {"id":"career-steps","name":"清晰阶梯","style":"modern","theme":"career","stage":1,"tag":"面试自信","elements":"金土","description":"阶梯边的侧光，呼应面试时的从容表达。"},
+    {"id":"career-letter","name":"等一封好消息","style":"modern","theme":"career","stage":2,"tag":"等好消息","elements":"土火","description":"暖光照亮信封，留给正在等回音的人。"},
+    {"id":"love","name":"双枝桃花","style":"chinese","theme":"love","stage":0,"tag":"感情","elements":"木火","description":"两支桃花相向，寓意遇见合拍的人。"},
+    {"id":"wealth","name":"金莲锦鲤","style":"chinese","theme":"wealth","stage":0,"tag":"财富","elements":"水金","description":"锦鲤与金莲，寓意日常丰盛与积累。"},
+    {"id":"energy","name":"山间晨路","style":"modern","theme":"energy","stage":0,"tag":"行动力","elements":"木土","description":"晨光照亮山路，适合想开始行动的时候。"},
+    {"id":"tarot-08-strength","name":"力量 VIII","style":"tarot","theme":"career","stage":1,"tag":"面试自信","elements":"土金","description":"力量牌寓意沉着与勇气，也适合找回行动力。","extra":"energy"},
+    {"id":"tarot-17-star","name":"星星 XVII","style":"tarot","theme":"career","stage":2,"tag":"等好消息","elements":"水木","description":"星星牌寓意希望，适合等待回音。","extra":"energy"},
+    {"id":"tarot-19-sun","name":"太阳 XIX","style":"tarot","theme":"career","stage":2,"tag":"等好消息","elements":"火金","description":"太阳牌寓意被看见与收获。","extra":"energy"},
+    {"id":"tarot-01-magician","name":"魔术师 I","style":"tarot","theme":"career","stage":1,"tag":"面试自信","elements":"火木","description":"魔术师牌提醒你发挥已有的能力。","extra":"energy"},
+    {"id":"tarot-06-lovers","name":"恋人 VI","style":"tarot","theme":"love","stage":0,"tag":"感情","elements":"火木","description":"恋人牌寓意相互选择、愿意靠近。"},
+    {"id":"tarot-07-chariot","name":"战车 VII","style":"tarot","theme":"career","stage":0,"tag":"求职机会","elements":"金火","description":"战车牌寓意主动出发、向目标推进。","extra":"energy"},
+    {"id":"tarot-ace-pentacles","name":"星币王牌","style":"tarot","theme":"career","stage":0,"tag":"求职机会","elements":"金土","description":"星币王牌寓意新机会或踏实积累。","extra":"wealth"},
+    {"id":"vintage-stairs","name":"哥特回廊","style":"vintage","theme":"career","stage":1,"tag":"面试自信","elements":"土金","description":"古典拱廊中的阶梯，寓意一步一步往前走。","extra":"energy"},
+    {"id":"vintage-letter","name":"窗前来信","style":"vintage","theme":"career","stage":2,"tag":"等好消息","elements":"水土","description":"窗前展开的信，寄托对消息的期待。"},
+    {"id":"career","name":"中国尊倒影","style":"urban","theme":"career","stage":2,"tag":"等好消息","elements":"水金","description":"中国尊的水面倒影，呼应等待 Offer 的心愿。"},
+    {"id":"career-dawn","name":"中国尊晨光","style":"urban","theme":"career","stage":0,"tag":"求职机会","elements":"火土","description":"晨光照亮高楼，寓意新的机会。"},
+    {"id":"career-interview","name":"中国尊仰视","style":"urban","theme":"career","stage":1,"tag":"面试自信","elements":"金水","description":"清晰的建筑线条，适合为面试集中注意力。"},
+    {"id":"career-night","name":"中国尊夜景","style":"urban","theme":"career","stage":2,"tag":"等好消息","elements":"水金","description":"深蓝夜色里的一盏光，适合等消息时。"},
   ];
-  const careerAlternatives = [
-    ["career-door", "career-dawn", "career-night", "career-steps", "career-interview", "career-letter", "career"],
-    ["career-steps", "career-interview", "career-dawn", "career-door", "career-letter", "career", "career-night"],
-    ["career-letter", "career", "career-night", "career-door", "career-dawn", "career-steps", "career-interview"],
-  ];
-  const roleProfiles = [
-    {pattern:/产品|设计|创意|内容|策划|品牌|媒体/,color:[231,166,209],motif:"halo",description:"用柔和的弧光呼应创意与表达。"},
-    {pattern:/技术|开发|工程|研发|数据|算法|软件|程序|计算机|developer|engineer|\bAI\b/i,color:[157,210,253],motif:"line",description:"用清晰的线条和蓝色侧光呼应技术方向。"},
-    {pattern:/金融|投资|会计|财务|银行|商业|销售|运营|商务|咨询/,color:[247,201,136],motif:"horizon",description:"用平直光线和米金色呼应稳健推进。"},
-  ];
-  const defaultRole = {color:[221,190,244],motif:"halo",description:"把你的目标融入短句和画面光线。"};
+
+  function references(theme) {
+    return artworks.filter(art => art.theme === theme || art.extra === theme);
+  }
 
   const styles = {
     soft: {name:"柔光", zoom:1, intensity:.80, brightness:0, saturation:.08},
@@ -67,40 +73,12 @@ const wallpaper = (() => {
     风:{color:[182,231,242],detail:"高处的青蓝光",x:.76,y:.24},
     水:{color:[141,177,251],detail:"低位蓝紫柔光",x:.74,y:.59},
   };
-  const timeThemes = [
-    {name:"微光", color:[211,177,246], x:.26, y:.38},
-    {name:"向前", color:[255,184,123], x:.68, y:.46},
-    {name:"舒展", color:[140,208,226], x:.79, y:.52},
-    {name:"安定", color:[218,186,153], x:.41, y:.67},
-  ];
   const variations = [
     {name:"原调", color:[0,0,0], zoom:0, x:.50},
     {name:"暮色", color:[183,135,243], zoom:.04, x:.37},
     {name:"暖晕", color:[248,169,116], zoom:.025, x:.64},
   ];
-  const stems = "甲乙丙丁戊己庚辛壬癸";
-  const stemElements = ["木","木","火","火","土","土","金","金","水","水"];
-  const referenceDate = Date.UTC(2026, 10, 11);
-  const day = 86400000;
   const mod = (value, length) => ((value % length) + length) % length;
-
-  function dayStem(value) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < "1900-01-01" || value > "2099-12-31") return null;
-    const utc = Date.parse(value + "T00:00:00Z");
-    if (!Number.isFinite(utc) || new Date(utc).toISOString().slice(0,10) !== value) return null;
-    const index = mod(5 + Math.round((utc - referenceDate) / day), stems.length);
-    return {stem:stems[index], element:stemElements[index]};
-  }
-
-  function periodTheme(period, isoDate) {
-    if (!["today","week"].includes(period)) return null;
-    const utc = Date.parse(isoDate + "T00:00:00Z");
-    if (!Number.isFinite(utc)) return null;
-    const dayIndex = Math.round(utc / day);
-    const weekIndex = Math.floor((dayIndex + 3) / 7);
-    const item = timeThemes[mod(period === "week" ? weekIndex : dayIndex, timeThemes.length)];
-    return {...item, label:(period === "week" ? "本周主题" : "今日主题") + " · " + item.name};
-  }
 
   function hash(text) {
     let value = 2166136261;
@@ -112,38 +90,36 @@ const wallpaper = (() => {
     const theme = themes[input.theme];
     const wish = input.wish.trim();
     const match = wish ? theme.examples.findIndex(pattern => pattern.test(wish)) : -1;
-    const isCareer = input.theme === "career";
-    const stageIndex = input.stage ?? (match >= 0 ? match : isCareer ? 2 : 0);
+    const options = references(input.theme);
+    const selected = options.find(item => item.id === input.reference);
+    const stageIndex = match >= 0 ? match : selected?.theme === input.theme ? selected.stage : input.theme === "career" ? 2 : 0;
     const stage = theme.stages[stageIndex];
-    const time = periodTheme(input.period, input.date);
-    const sign = zodiac.find(item => item[0] === input.zodiac);
-    const stem = input.birth ? dayStem(input.birth) : null;
+    const sign = zodiac.find(item => item[0] === input.personal?.zodiac);
     const star = sign ? {...zodiacLight[sign[1]], label:sign[0]} : null;
-    const element = stem ? {...elements[stem.element], label:stem.stem + stem.element} : null;
-    const role = isCareer ? input.role?.trim() || "" : "";
-    const profile = role ? roleProfiles.find(item => item.pattern.test(role)) ?? defaultRole : null;
-    const upload = input.reference === "upload" && input.upload ? input.upload : null;
-    let art = {id:input.theme,name:"",description:stage[2]};
-    if (isCareer && !upload) {
-      const order = careerAlternatives[stageIndex];
-      const start = Math.max(0,order.indexOf(input.reference));
-      art = careerReferences.find(item => item.id === order[mod(start+input.variation,order.length)]);
-    }
-    if (upload) art = {id:"upload",name:"我的参考图",description:"用你选的照片作为壁纸底图。"};
-    const variation = variations[isCareer && !upload ? 0 : mod(input.variation,variations.length)];
+    const key = input.personal?.element;
+    const element = key ? {...elements[key], label:key + "元素",
+      textColor:{木:"#d5f2d7",火:"#ffe1cc",土:"#f5dfbd",金:"#f5dda6",水:"#dcecff"}[key]} : null;
+    const upload = input.reference === "upload" ? input.upload : null;
+    const order = [...options].sort((a,b) => {
+      const score = art => (art.id === selected?.id ? 30 : 0) +
+        (art.theme === input.theme && art.stage === stageIndex ? 2 : 0) +
+        (key && art.elements.includes(key) ? 4 : 0);
+      return score(b) - score(a);
+    });
+    const art = upload ? {id:"upload",name:"我的参考图",description:"用你选的照片作为壁纸底图。"}
+      : order[mod(input.variation,order.length)];
+    const variation = variations[upload ? mod(input.variation,variations.length) : 0];
     const details = [];
-    if (role) details.push("目标 · " + role + "。" + profile.description);
     if (star) details.push(star.label + " · 加入" + star.detail + "。");
-    if (element) details.push("出生日干 " + element.label + " · 加入" + element.detail + "。");
-    if (time) details.push(time.label + " · 调整背景的明暗。");
+    if (element) details.push((input.personal.mode === "day" ? "日干五行灵感" : "八字配图建议 · 简化扶抑") +
+      " · " + element.label + "，加入" + element.detail + "和对应的短句色。");
     return {
-      theme:input.theme, name:theme.name, stage:stage[0], phrase:stage[1], reason:art.description, details, art, upload,
-      color:profile?.color ?? stage[3], motif:profile?.motif ?? stage[4], role, wish, style:styles[input.style],
-      star, element, time, variation, seed:hash(role+" "+wish),
+      theme:input.theme, name:theme.name, phrase:stage[1], reason:art.description, details, art, upload,
+      color:stage[3], motif:stage[4], wish, style:styles[input.style], star, element, variation, seed:hash(wish),
     };
   }
 
-  return {themes, styles, zodiac, careerReferences, dayStem, periodTheme, build};
+  return {themes, styles, zodiac, artworks, galleryStyles, references, build};
 })();
 if (typeof module === "object" && module.exports) module.exports = wallpaper;
 

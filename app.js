@@ -14,6 +14,8 @@ get("phone-date").textContent = new Intl.DateTimeFormat("zh-CN", {
 get("birth").max = date;
 const state = {input:null, recipe:null, withText:true, variation:0, url:null, renderId:0};
 const images = new Map();
+let suggestion = null;
+let suggestionVersion = 0;
 const uploadInput = get("upload-file");
 const uploadStatus = get("upload-status");
 const uploadHint = uploadStatus.textContent;
@@ -44,31 +46,35 @@ function choices(target, name, entries, selected) {
   }
 }
 
-function configureTheme(theme) {
-  choices(get("stages"), "stage", wallpaper.themes[theme].stages.map(([label], i) => [String(i),label]), "");
-  const isCareer = theme === "career";
-  get("role-field").hidden = !isCareer;
-  get("role").disabled = !isCareer;
+function configureTheme(theme, selected = "auto") {
   const references = get("references");
   references.replaceChildren();
-  get("reference-auto").checked = true;
-  if (!isCareer) return;
-  for (const art of wallpaper.careerReferences) {
+  get("reference-auto").checked = selected === "auto";
+  for (const art of wallpaper.references(theme)) {
     const label = document.createElement("label");
     label.className = "reference-card";
     const radio = document.createElement("input");
     radio.type = "radio";
     radio.name = "reference";
     radio.value = art.id;
+    radio.checked = selected === art.id;
     const image = document.createElement("img");
     image.src = artUrl(art.id);
     image.alt = "";
     image.loading = "lazy";
+    if (art.style === "tarot") label.classList.add("tarot-card");
     const title = document.createElement("span");
     title.textContent = art.name;
     label.append(radio,image,title);
     references.append(label);
   }
+  updateReferenceSummary();
+}
+
+function updateReferenceSummary() {
+  const id = new FormData(form).get("reference");
+  get("reference-summary").textContent = id === "upload" ? "我的参考图"
+    : wallpaper.artworks.find(art => art.id === id)?.name ?? "选图、上传或调整氛围";
 }
 
 choices(get("themes"), "theme", Object.entries(wallpaper.themes).map(([key,item]) => [key,item.name,item.icon]), "career");
@@ -77,8 +83,15 @@ configureTheme("career");
 get("zodiac").add(new Option("请选择", ""));
 for (const [name] of wallpaper.zodiac) get("zodiac").add(new Option(name, name));
 
+form.addEventListener("input", event => {
+  if (!event.target.closest("#suggestion")) clearSuggestion();
+});
 form.addEventListener("change", event => {
   if (event.target.name === "theme") configureTheme(event.target.value);
+  if (event.target.name === "reference") updateReferenceSummary();
+  get("birth-time-field").hidden = !get("birth").value;
+  get("birth-zone-field").hidden = !get("birth").value || !get("birth-time").value;
+  get("custom-zone-field").hidden = get("birth-zone-field").hidden || get("birth-zone").value !== "other";
 });
 
 function setUploadStatus(message, error = false) {
@@ -129,6 +142,8 @@ uploadInput.addEventListener("change", async () => {
     get("reference-upload").disabled = false;
     get("reference-upload").checked = true;
     setUploadStatus("已选用上传图。调整裁切位置后，点击生成。");
+    updateReferenceSummary();
+    clearSuggestion();
   } catch (problem) {
     URL.revokeObjectURL(url);
     if (request === uploadRequest) setUploadStatus(problem.message, true);
@@ -145,6 +160,8 @@ get("remove-upload").addEventListener("click", () => {
   if (reference.checked) get("reference-auto").checked = true;
   reference.disabled = true;
   setUploadStatus(uploadHint);
+  updateReferenceSummary();
+  clearSuggestion();
   if (state.input.reference === "upload") {
     state.input = {...state.input,reference:"auto",upload:null};
     state.variation = 0;
@@ -155,20 +172,85 @@ get("remove-upload").addEventListener("click", () => {
 get("crop").addEventListener("input", event => {
   const position = event.target.value + "%";
   get("uploaded-thumb").style.objectPosition = position + " " + position;
+  clearSuggestion();
 });
 get("crop").addEventListener("change", () => {
-  if (state.input.upload?.image !== uploaded?.image || get("reference-upload").checked === false) return;
+  if (!uploaded || state.input.upload?.image !== uploaded.image || get("reference-upload").checked === false) return;
   state.input.upload = {...state.input.upload,crop:Number(get("crop").value)/100};
   render().catch(showRenderError);
 });
-for (const card of document.querySelectorAll("[data-pick]")) {
-  card.addEventListener("click", () => {
-    const radio = Array.from(form.elements.theme).find(input => input.value === card.dataset.pick);
-    radio.checked = true;
-    configureTheme(card.dataset.pick);
-    get("studio").scrollIntoView();
-    radio.focus({preventScroll:true});
+const gallery = get("gallery-cards");
+let galleryStyle = "";
+for (const [id,name] of [["","全部"],...Object.entries(wallpaper.galleryStyles)]) {
+  const option = document.createElement("button");
+  option.className = "choice";
+  option.type = "button";
+  option.textContent = name;
+  option.setAttribute("aria-pressed",String(!id));
+  option.addEventListener("click", () => {
+    galleryStyle = id;
+    for (const sibling of get("style-filter").children) sibling.setAttribute("aria-pressed",String(sibling === option));
+    showGallery();
   });
+  get("style-filter").append(option);
+}
+for (const tag of new Set(wallpaper.artworks.flatMap(art => art.extra ? [art.tag, art.extra === "wealth" ? "财富" : "行动力"] : [art.tag]))) {
+  get("intent-filter").add(new Option(tag,tag));
+}
+get("intent-filter").addEventListener("change",showGallery);
+showGallery();
+
+function showGallery() {
+  const tag = get("intent-filter").value;
+  const options = wallpaper.artworks.filter(art => (!galleryStyle || art.style === galleryStyle)
+    && (!tag || art.tag === tag || (tag === "行动力" && art.extra === "energy") || (tag === "财富" && art.extra === "wealth")));
+  gallery.replaceChildren();
+  for (const art of options) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gallery-card" + (art.style === "tarot" ? " tarot-card" : "");
+    button.dataset.artId = art.id;
+    const image = document.createElement("img");
+    image.src = artUrl(art.id);
+    image.alt = "";
+    image.loading = "lazy";
+    const caption = document.createElement("span");
+    const title = document.createElement("strong");
+    title.textContent = art.name;
+    const use = document.createElement("small");
+    use.textContent = art.tag === tag || !tag ? art.tag : tag;
+    caption.append(title,use);
+    button.append(image,caption);
+    button.addEventListener("click", () => {
+      const theme = art.tag !== tag && tag && art.extra ? art.extra : art.theme;
+      const radio = Array.from(form.elements.theme).find(input => input.value === theme);
+      radio.checked = true;
+      configureTheme(theme,art.id);
+      clearSuggestion();
+      get("studio").scrollIntoView();
+      get("generate").focus({preventScroll:true});
+    });
+    gallery.append(button);
+  }
+  get("gallery-empty").hidden = options.length > 0;
+}
+
+function paintTarot(ctx,image,w,h) {
+  const background = ctx.createLinearGradient(0,0,w,h);
+  background.addColorStop(0,"#251832");
+  background.addColorStop(.56,"#39283a");
+  background.addColorStop(1,"#171321");
+  ctx.fillStyle = background;
+  ctx.fillRect(0,0,w,h);
+  glow(ctx,w,h,.5,.53,[212,178,135],.33,.7);
+  const scale = Math.min(w*.78/image.width,h*.54/image.height);
+  const iw = image.width*scale, ih = image.height*scale;
+  ctx.save();
+  ctx.shadowColor = "#090611";
+  ctx.shadowBlur = w*.04;
+  ctx.shadowOffsetY = w*.014;
+  ctx.drawImage(image,(w-iw)/2,h*.55-ih/2,iw,ih);
+  ctx.restore();
 }
 
 function loadImage(theme) {
@@ -263,7 +345,13 @@ function paint(target, image, recipe, withText) {
   const scale = Math.max(w/image.width,h/image.height) * (recipe.style.zoom + recipe.variation.zoom);
   const iw = image.width*scale, ih = image.height*scale;
   const crop = recipe.upload?.crop;
-  ctx.drawImage(image,(w-iw)*(crop ?? recipe.variation.x),(h-ih)*(crop ?? .54),iw,ih);
+  if (recipe.art.style === "tarot") {
+    paintTarot(ctx,image,w,h);
+  } else {
+    ctx.fillStyle = "#1b152a";
+    ctx.fillRect(0,0,w,h);
+    ctx.drawImage(image,(w-iw)*(crop ?? recipe.variation.x),(h-ih)*(crop ?? .54),iw,ih);
+  }
   const color = recipe.color;
   const intensity = recipe.style.intensity;
   const variationColor = recipe.variation.color;
@@ -275,7 +363,6 @@ function paint(target, image, recipe, withText) {
   glow(ctx,w,h,.31+shift,.55,color,.24*intensity,.85);
   if (recipe.variation.zoom) glow(ctx,w,h,recipe.variation.x,.31,variationColor,.33,.98);
   if (recipe.star) glow(ctx,w,h,recipe.star.x,recipe.star.y,recipe.star.color,.42*intensity,1.05);
-  if (recipe.time) glow(ctx,w,h,recipe.time.x,recipe.time.y,recipe.time.color,.22,.84);
   motif(ctx,w,h,recipe.motif,recipe.color,.18*intensity);
   if (recipe.element) {
     glow(ctx,w,h,.34,.65,recipe.element.color,.22*intensity,.64);
@@ -293,12 +380,12 @@ function paint(target, image, recipe, withText) {
   if (withText) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#fff2ff";
+    ctx.fillStyle = recipe.element?.textColor ?? "#fff2ff";
     ctx.shadowColor = "rgba(18,9,33,.9)";
     ctx.shadowBlur = w*.018;
     ctx.font = '600 ' + Math.round(w*.054) + 'px "Songti SC","SimSun","Microsoft YaHei",serif';
     ctx.fillText(recipe.phrase,w/2,h*.843,w*.82);
-    const note = recipe.wish || (recipe.role ? "奔赴 " + recipe.role : "");
+    const note = recipe.wish;
     if (note) {
       const chars = Array.from(note);
       const text = chars.length > 25 ? chars.slice(0,24).join("") + "…" : chars.join("");
@@ -324,8 +411,8 @@ async function render() {
   if (version !== state.renderId) return;
   paint(canvas,image,recipe,state.withText);
   state.recipe = recipe;
-  get("result-tags").textContent = [recipe.name,recipe.stage,recipe.art.name,recipe.style.name,recipe.star?.label,recipe.element?.label,
-    state.variation && (recipe.upload || recipe.theme !== "career") ? recipe.variation.name : ""].filter(Boolean).join(" · ");
+  get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.star?.label,recipe.element?.label,
+    state.variation && recipe.upload ? recipe.variation.name : ""].filter(Boolean).join(" · ");
   const details = get("result-details");
   details.replaceChildren(...recipe.details.map(value => {
     const row = document.createElement("li");
@@ -333,7 +420,7 @@ async function render() {
     return row;
   }));
   details.hidden = !recipe.details.length;
-  get("variation").textContent = (recipe.upload || recipe.theme !== "career") ? "换一种效果" : "换一张图";
+  get("variation").textContent = recipe.upload ? "换一种效果" : "换一张图";
   get("result-title").textContent = recipe.phrase;
   get("result-reason").textContent = recipe.reason;
   canvas.setAttribute("aria-label", recipe.name + "锁屏壁纸，" + recipe.phrase);
@@ -346,7 +433,7 @@ async function render() {
     if (state.url) URL.revokeObjectURL(state.url);
     state.url = URL.createObjectURL(blob);
     download.href = state.url;
-    download.download = "好运锁屏-" + recipe.name + "-" + recipe.stage + (state.withText ? "-有字" : "-无字") + ".png";
+    download.download = "好运锁屏-" + recipe.name + "-" + recipe.art.name + (state.withText ? "-有字" : "-无字") + ".png";
     get("download-status").textContent = "PNG · 1080 × 2400";
   },"image/png");
 }
@@ -356,45 +443,103 @@ function showRenderError(error) {
   status.textContent = error.name === "SecurityError" ? "浏览器限制了本地图片导出，请从站点或本地服务打开。" : error.message;
 }
 
-form.addEventListener("submit", async event => {
-  event.preventDefault();
+function readInput() {
   const values = new FormData(form);
-  const input = {
-    theme:values.get("theme"), stage:values.has("stage") ? Number(values.get("stage")) : null,
-    style:values.get("style"), wish:values.get("wish"), role:values.get("role"), zodiac:values.get("zodiac"),
-    birth:values.get("birth"), period:values.get("period"), reference:values.get("reference"), date,
-    upload:uploaded ? {image:uploaded.image,crop:Number(get("crop").value)/100} : null,
+  return {
+    theme:values.get("theme"), style:values.get("style"), wish:values.get("wish"), reference:values.get("reference"),
+    upload:values.get("reference") === "upload" && uploaded ? {image:uploaded.image,crop:Number(get("crop").value)/100} : null,
   };
-  const error = get("error");
-  if (input.birth && !wallpaper.dayStem(input.birth)) {
-    error.textContent = "请填写有效的公历出生日期。";
-    error.hidden = false;
-    return;
-  }
+}
+
+async function generate(input) {
+  if (get("generate").disabled) return;
+  clearSuggestion();
   const previousInput = state.input;
   const previousVariation = state.variation;
   state.input = input;
   state.variation = 0;
-  const button = get("generate");
-  button.disabled = true;
-  error.hidden = true;
+  get("generate").disabled = true;
+  get("error").hidden = true;
   try {
     await render();
     get("preview-status").textContent = "已生成";
     if (matchMedia("(max-width: 680px)").matches) get("result").scrollIntoView({block:"start"});
+    get("result").focus({preventScroll:true});
   } catch (problem) {
     state.input = previousInput;
     state.variation = previousVariation;
-    error.textContent = problem.message;
-    error.hidden = false;
+    get("error").textContent = problem.message;
+    get("error").hidden = false;
     showRenderError(problem);
   } finally {
-    button.disabled = false;
+    get("generate").disabled = false;
   }
+}
+
+function clearSuggestion() {
+  ++suggestionVersion;
+  suggestion = null;
+  get("suggestion").hidden = true;
+  get("personal-error").hidden = true;
+}
+
+async function previewSuggestion() {
+  const version = ++suggestionVersion;
+  const apply = get("apply-suggestion");
+  const summary = get("suggestion-summary");
+  apply.disabled = true;
+  summary.textContent = "正在预览配图建议…";
+  try {
+    const input = {...suggestion.input,personal:{...suggestion.personal,element:get("suggestion-element").value}};
+    const recipe = wallpaper.build({...input,variation:0});
+    const image = recipe.upload?.image ?? await loadImage(recipe.art.id);
+    if (version !== suggestionVersion) return;
+    paint(get("suggestion-preview"),image,recipe,state.withText);
+    summary.textContent = "底图「" + recipe.art.name + "」。" + (recipe.details.join("") || "你可以仅按心愿生成。");
+    apply.disabled = recipe.details.length === 0;
+  } catch (error) {
+    if (version === suggestionVersion) summary.textContent = error.message;
+  }
+}
+
+get("suggest").addEventListener("click", () => {
+  clearSuggestion();
+  const zodiac = get("zodiac").value;
+  const birth = get("birth").value;
+  const time = get("birth-time").value;
+  const zone = get("birth-zone").value === "other" ? get("custom-zone").value.trim() : get("birth-zone").value;
+  try {
+    if (!get("birth").validity.valid) throw new Error("请填写有效的公历出生日期。");
+    if (!zodiac && !birth) throw new Error("请选择星座，或填写出生日期。");
+    const chart = birth ? bazi.chartPillars(globalThis.Solar,birth,time,zone) : null;
+    const candidates = get("suggestion-element");
+    candidates.replaceChildren();
+    for (const element of chart?.candidates ?? []) candidates.add(new Option(element + "元素",element));
+    get("suggestion-element-field").hidden = !candidates.length;
+    get("suggestion-chart").textContent = !chart ? zodiac + " · 星座配图"
+      : chart.mode === "day" ? chart.dayStem + " · 日干五行灵感"
+      : chart.pillars.join(" · ") + (chart.candidates.length ? " · 简化扶抑候选" : " · 此命盘暂无明确五行建议");
+    suggestion = {input:readInput(),personal:{zodiac,mode:chart?.mode}};
+    get("suggestion").hidden = false;
+    previewSuggestion();
+  } catch (error) {
+    get("personal-error").textContent = error.message;
+    get("personal-error").hidden = false;
+  }
+});
+get("suggestion-element").addEventListener("change",previewSuggestion);
+get("apply-suggestion").addEventListener("click", () => {
+  if (!suggestion) return;
+  generate({...suggestion.input,personal:{...suggestion.personal,element:get("suggestion-element").value}});
+});
+get("skip-suggestion").addEventListener("click", () => generate(readInput()));
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  generate(readInput());
 });
 
 get("variation").addEventListener("click", () => {
-  const total = state.input.theme === "career" && state.input.reference !== "upload" ? wallpaper.careerReferences.length : 3;
+  const total = state.input.upload ? 3 : wallpaper.references(state.input.theme).length;
   state.variation = (state.variation+1)%total;
   render().catch(showRenderError);
 });
@@ -403,10 +548,11 @@ for (const [id,flag] of [["with-text",true],["without-text",false]]) {
     if (state.withText === flag) return;
     state.withText = flag;
     toggleText();
+    if (suggestion) previewSuggestion();
     render().catch(showRenderError);
   });
 }
 
-state.input = {theme:"career", stage:2, style:"soft", wish:"", role:"", zodiac:"", birth:"", period:"any", reference:"auto", upload:null, date};
+state.input = readInput();
 render().catch(showRenderError);
 

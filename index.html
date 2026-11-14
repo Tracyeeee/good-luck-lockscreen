@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#121021">
-<meta name="description" content="选择你的心愿和当前阶段，生成一张专属手机锁屏。">
+<meta name="description" content="选择你的心愿，生成一张专属手机锁屏。">
 <title>好运锁屏 · 为此刻的心愿做一张壁纸</title>
-<link rel="stylesheet" href="style.css">
-<script src="wallpaper.js" defer></script>
-<script src="app.js" defer></script>
+<link rel="stylesheet" href="style.css?v=3">
+<script src="vendor/lunar.js" defer></script>
+<script src="bazi.js?v=3" defer></script>
+<script src="wallpaper.js?v=3" defer></script>
+<script src="app.js?v=3" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -39,48 +41,75 @@
     <div class="workbench">
       <form id="wish-form" class="panel form-panel">
         <fieldset><legend>选择心愿</legend><div id="themes" class="theme-grid"></div></fieldset>
-        <fieldset><legend>你现在的阶段</legend><div id="stages" class="chips"></div></fieldset>
-        <fieldset class="reference-section">
-          <legend>选择壁纸底图</legend>
-          <div class="reference-actions">
-            <label class="choice"><input type="radio" name="reference" id="reference-auto" value="auto" checked>按心愿推荐</label>
-            <button class="button quiet" id="pick-file" type="button">上传参考图 <span aria-hidden="true">↑</span></button>
-            <input type="file" id="upload-file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif" hidden>
-          </div>
-          <div id="references" class="reference-grid" aria-label="Offer 底图"></div>
-          <div id="upload-preview" class="upload-preview" hidden>
-            <img id="uploaded-thumb" alt="上传的参考图">
-            <div>
-              <label class="choice"><input type="radio" name="reference" value="upload" id="reference-upload" disabled>使用上传图</label>
-              <label class="crop-label" for="crop">调整裁切位置</label>
-              <input id="crop" type="range" min="0" max="100" value="50">
-            </div>
-            <button class="button quiet" id="remove-upload" type="button">移除</button>
-          </div>
-          <p id="upload-status" class="field-note" role="status">支持 JPG、PNG 和 WebP。图片在浏览器内处理。</p>
-        </fieldset>
-        <div class="field" id="role-field">
-          <label for="role">目标岗位或行业 <small>选填</small></label>
-          <input id="role" name="role" type="text" placeholder="比如，产品经理、软件工程、金融" maxlength="35">
-        </div>
-        <div class="field">
-          <label for="wish">我的具体心愿 <small>选填</small></label>
-          <input id="wish" name="wish" type="text" placeholder="比如，希望收到心仪团队的 Offer" maxlength="80">
-        </div>
-        <fieldset><legend>画面氛围</legend><div id="styles" class="chips"></div></fieldset>
-        <fieldset class="personal">
-          <legend>加入个人信息 <small>选填</small></legend>
-          <div class="personal-fields">
-            <div class="field"><label for="zodiac">太阳星座</label><select id="zodiac" name="zodiac"></select><small>影响光线的方向和色温。</small></div>
-            <div class="field"><label for="birth">公历出生日期</label><input type="date" id="birth" name="birth" min="1900-01-01" max="2099-12-31"><small>用出生日干五行选择图案。</small></div>
-            <div class="field"><label for="period">壁纸时段</label><select id="period" name="period"><option value="any">不限时段</option><option value="today">今天的灵感</option><option value="week">本周的灵感</option></select></div>
-          </div>
-          <p class="field-note">出生日期仅用于浏览器内计算。</p>
-        </fieldset>
-        <button id="generate" class="button primary generate" type="submit">✦ <span>生成我的壁纸</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+        <button id="generate" class="button primary generate" type="submit" formnovalidate>✦ <span>生成我的壁纸</span><span class="button-arrow" aria-hidden="true">↗</span></button>
         <p id="error" class="error" role="alert" hidden></p>
+        <details id="customize" class="options">
+          <summary>自定义画面 <small id="reference-summary">选图、上传或调整氛围</small></summary>
+          <div class="options-body">
+            <div class="field">
+              <label for="wish">我的具体心愿 <small>选填</small></label>
+              <input id="wish" name="wish" type="text" placeholder="比如，终面结束，正在等消息" maxlength="80">
+            </div>
+            <fieldset class="reference-section">
+              <legend>选择壁纸底图</legend>
+              <div class="reference-actions">
+                <label class="choice"><input type="radio" name="reference" id="reference-auto" value="auto" checked>按心愿推荐</label>
+                <button class="button quiet" id="pick-file" type="button">上传参考图 <span aria-hidden="true">↑</span></button>
+                <input type="file" id="upload-file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif" hidden>
+              </div>
+              <div id="references" class="reference-grid"></div>
+              <div id="upload-preview" class="upload-preview" hidden>
+                <img id="uploaded-thumb" alt="上传的参考图">
+                <div>
+                  <label class="choice"><input type="radio" name="reference" value="upload" id="reference-upload" disabled>使用上传图</label>
+                  <label class="crop-label" for="crop">调整裁切位置</label>
+                  <input id="crop" type="range" min="0" max="100" value="50">
+                </div>
+                <button class="button quiet" id="remove-upload" type="button">移除</button>
+              </div>
+              <p id="upload-status" class="field-note" role="status">支持 JPG、PNG 和 WebP。图片在浏览器内处理。</p>
+            </fieldset>
+            <fieldset><legend>画面氛围</legend><div id="styles" class="chips"></div></fieldset>
+          </div>
+        </details>
+        <details id="personal" class="options">
+          <summary>加入个人信息 <small>星座或八字配图</small></summary>
+          <div class="options-body">
+            <div class="personal-fields">
+              <div class="field"><label for="zodiac">星座</label><select id="zodiac"></select></div>
+              <div class="field"><label for="birth">公历出生日期</label><input type="date" id="birth" min="1900-01-01" max="2099-12-31"></div>
+              <div class="field" id="birth-time-field" hidden><label for="birth-time">出生时间 <small>可跳过</small></label><input type="time" id="birth-time"></div>
+              <div class="field" id="birth-zone-field" hidden><label for="birth-zone">出生地时区</label><select id="birth-zone">
+                <option value="Asia/Shanghai">中国大陆 · 北京时间</option>
+                <option value="Asia/Hong_Kong">香港</option><option value="Asia/Taipei">台湾</option>
+                <option value="Asia/Singapore">新加坡</option><option value="Asia/Tokyo">日本</option>
+                <option value="Asia/Seoul">韩国</option><option value="Europe/London">英国 · 伦敦</option>
+                <option value="Europe/Paris">欧洲 · 巴黎</option><option value="America/New_York">北美 · 美东</option>
+                <option value="America/Los_Angeles">北美 · 美西</option><option value="Australia/Sydney">澳大利亚 · 悉尼</option>
+                <option value="other">其他时区…</option>
+              </select></div>
+              <div class="field" id="custom-zone-field" hidden><label for="custom-zone">时区名称</label><input id="custom-zone" placeholder="例如 Pacific/Auckland" maxlength="64"></div>
+            </div>
+            <p class="field-note">生日可提供日干五行灵感。添加出生时间和时区可查看四柱配图建议。资料在浏览器内处理。</p>
+            <button id="suggest" class="button quiet" type="button">查看配图建议</button>
+            <p id="personal-error" class="error" role="alert" hidden></p>
+            <section id="suggestion" class="suggestion" aria-labelledby="suggestion-title" hidden>
+              <canvas id="suggestion-preview" width="162" height="360" role="img" aria-label="待确认的配图预览"></canvas>
+              <div>
+                <h3 id="suggestion-title">配图建议</h3>
+                <p id="suggestion-chart"></p>
+                <div class="field" id="suggestion-element-field" hidden><label for="suggestion-element">建议元素</label><select id="suggestion-element"></select></div>
+                <p id="suggestion-summary" aria-live="polite"></p>
+              </div>
+              <div class="suggestion-actions">
+                <button id="apply-suggestion" class="button primary" type="button">应用建议并生成</button>
+                <button id="skip-suggestion" class="button quiet" type="button">仅按心愿生成</button>
+              </div>
+            </section>
+          </div>
+        </details>
       </form>
-      <section class="panel result-panel" id="result" aria-labelledby="preview-title">
+      <section class="panel result-panel" id="result" tabindex="-1" aria-labelledby="preview-title">
         <div class="result-head"><h3 id="preview-title">锁屏预览</h3><span id="preview-status" class="status">示例</span></div>
         <div class="phone-stage">
           <div class="phone">
@@ -105,12 +134,12 @@
   </section>
   <section class="shell gallery" id="gallery" aria-labelledby="gallery-title">
     <div class="section-heading"><div><div class="eyebrow"><span aria-hidden="true">✧</span> 壁纸灵感</div><h2 id="gallery-title">从喜欢的画面开始</h2></div><p>选择一张，定制你的版本</p></div>
-    <div class="gallery-grid">
-      <button class="gallery-card" data-pick="career" type="button"><img src="art/career.jpg" loading="lazy" alt="蓝紫色天空下的中国尊与水面倒影"><span>接心仪 Offer <b aria-hidden="true">↗</b></span></button>
-      <button class="gallery-card" data-pick="love" type="button"><img src="art/love.jpg" loading="lazy" alt="暮色下相向的粉色桃花枝"><span>遇见正缘 <b aria-hidden="true">↗</b></span></button>
-      <button class="gallery-card" data-pick="wealth" type="button"><img src="art/wealth.jpg" loading="lazy" alt="深绿色水面上的锦鲤与金色莲花"><span>丰盛积累 <b aria-hidden="true">↗</b></span></button>
-      <button class="gallery-card" data-pick="energy" type="button"><img src="art/energy.jpg" loading="lazy" alt="通往紫色山间晨光的小路"><span>找回行动力 <b aria-hidden="true">↗</b></span></button>
+    <div class="gallery-filters">
+      <div id="style-filter" class="chips" role="group" aria-label="按风格浏览"></div>
+      <div class="field gallery-intent"><label for="intent-filter">按心愿筛选</label><select id="intent-filter"><option value="">全部心愿</option></select></div>
     </div>
+    <div id="gallery-cards" class="gallery-grid"></div>
+    <p id="gallery-empty" class="field-note" role="status" hidden>这个风格暂时没有对应心愿的壁纸。</p>
   </section>
 </main>
 <footer class="site-footer"><div class="shell"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">✦</span>好运锁屏</a><span>把心愿留在每天都会看到的地方</span></div></footer>
