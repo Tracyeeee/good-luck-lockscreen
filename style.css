@@ -185,6 +185,19 @@ label small,summary small{font-weight:400;color:var(--muted);margin-left:5px}
 .art-actions .button{min-height:40px;padding:8px 12px;font-size:13px}
 .art-close{position:absolute;top:10px;right:10px;z-index:1;height:36px;min-height:36px;width:36px;padding:0;font-size:20px;background:#22172e}
 .variation-count{color:var(--muted);font-size:11px;margin-left:2px}
+.portrait-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.portrait-choice{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:116px;min-width:0;padding:9px 5px;border:1px solid var(--line);border-radius:10px;background:#211b31;text-align:center;cursor:pointer}
+.portrait-choice:has(input:checked){border-color:#b88ae1;background:#3e2955}
+.portrait-choice:has(input:focus-visible){outline:2px solid #f0cfff;outline-offset:2px}
+.portrait-choice:has(input:disabled){opacity:.45;cursor:default}
+.portrait-choice input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:inherit}
+.portrait-choice canvas{width:58px;height:58px}
+.portrait-choice span{font-size:12px}
+.portrait-choice small{font-size:10px;line-height:1.4;color:var(--muted)}
+.portrait-upload{display:flex;gap:8px;flex-wrap:wrap}
+.portrait-upload .button{font-size:12px;min-height:38px;padding:8px 11px}
+#portrait-credit a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:400px){.portrait-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:580px){
   .art-dialog-content{grid-template-columns:1fr;gap:11px;padding:11px}
   .art-preview canvas{height:min(56vh,450px)}

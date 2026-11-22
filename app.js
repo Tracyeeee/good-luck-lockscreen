@@ -117,6 +117,146 @@ function readUpload(url) {
   });
 }
 
+
+let uploadedPortrait = null;
+let portraitRequest = 0;
+const portraitChoices = get("portrait-choices");
+for (const person of [{id:"",name:"不添加",note:"仅使用底图"},...portraits.people,{id:"upload",name:"我的头像",note:"自己上传"}]) {
+  const label = document.createElement("label");
+  label.className = "portrait-choice";
+  const radio = document.createElement("input");
+  radio.type = "radio";
+  radio.name = "portrait";
+  radio.value = person.id;
+  radio.checked = !person.id;
+  radio.disabled = person.id === "upload";
+  label.append(radio);
+  if (person.path) {
+    const thumb = document.createElement("canvas");
+    thumb.width = 100;
+    thumb.height = 100;
+    thumb.setAttribute("aria-hidden","true");
+    label.append(thumb);
+    loadImage("portrait:"+person.id,person.path).then(image => {
+      portraits.thumbnail(thumb,image,person);
+    }).catch(() => {
+      thumb.hidden = true;
+    });
+  }
+  const title = document.createElement("span");
+  title.textContent = person.name;
+  const note = document.createElement("small");
+  note.textContent = person.note;
+  label.append(title,note);
+  portraitChoices.append(label);
+}
+for (const [id,layout] of Object.entries(portraits.layouts)) get("portrait-layout").add(new Option(layout.name,id));
+
+function readPortrait() {
+  const id = new FormData(form).get("portrait");
+  if (!id) return null;
+  const person = id === "upload" ? uploadedPortrait : portraits.people.find(person => person.id === id);
+  if (!person) return null;
+  return {...person,layout:get("portrait-layout").value,size:Number(get("portrait-size").value),
+    opacity:Number(get("portrait-opacity").value),x:Number(get("portrait-x").value),
+    y:Number(get("portrait-y").value),focus:Number(get("portrait-focus").value)};
+}
+
+function showPortraitSelection() {
+  const portrait = readPortrait();
+  get("portrait-adjust").hidden = !portrait;
+  get("portrait-summary").textContent = portrait ? portrait.name+" · "+(portrait.note || "自己上传") : "选填 · 常用头像或自己上传";
+  const credit = get("portrait-credit");
+  credit.replaceChildren();
+  credit.hidden = !portrait?.source;
+  if (portrait?.source) {
+    const link = document.createElement("a");
+    link.href = portrait.source;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "头像出处 · "+portrait.credit;
+    credit.append(link);
+  }
+}
+
+function updatePortrait() {
+  showPortraitSelection();
+  state.input = {...state.input,portrait:readPortrait()};
+  get("preview-status").textContent = "预览";
+  clearSuggestion();
+  render().catch(showRenderError);
+}
+
+function resetPortrait() {
+  const layout = portraits.layouts[get("portrait-layout").value];
+  for (const key of ["x","y","size","opacity"]) get("portrait-"+key).value = layout[key];
+  get("portrait-focus").value = "0";
+}
+
+portraitChoices.addEventListener("change", () => {
+  get("portrait-layout").value = "side";
+  resetPortrait();
+  updatePortrait();
+});
+get("portrait-layout").addEventListener("change", () => {
+  resetPortrait();
+  updatePortrait();
+});
+for (const key of ["x","y","size","opacity","focus"]) get("portrait-"+key).addEventListener("input",updatePortrait);
+get("portrait-reset").addEventListener("click", () => {
+  get("portrait-layout").value = "side";
+  resetPortrait();
+  updatePortrait();
+});
+get("pick-portrait").addEventListener("click", () => get("portrait-file").click());
+get("portrait-file").addEventListener("change", async () => {
+  const file = get("portrait-file").files[0];
+  get("portrait-file").value = "";
+  if (!file) return;
+  const request = ++portraitRequest;
+  const status = get("portrait-status");
+  if (file.size > 15*1024*1024 || !/^image\/(jpeg|png|webp)$/.test(file.type)) {
+    status.textContent = "请上传 15 MB 以内的 JPG、PNG 或 WebP。";
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  status.textContent = "正在读取头像…";
+  try {
+    const image = await readUpload(url);
+    if (request !== portraitRequest) { URL.revokeObjectURL(url); return; }
+    if (image.naturalWidth*image.naturalHeight > 60000000) throw new Error("图片尺寸过大，请缩小后重试。");
+    if (uploadedPortrait) URL.revokeObjectURL(uploadedPortrait.url);
+    uploadedPortrait = {id:"upload",name:"我的头像",image,url};
+    const radio = portraitChoices.querySelector('[value="upload"]');
+    radio.disabled = false;
+    radio.checked = true;
+    get("remove-portrait").hidden = false;
+    status.textContent = "已选用我的头像。可在「调整人物」中调整取景。";
+    get("portrait-layout").value = "side";
+    resetPortrait();
+    updatePortrait();
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    if (request === portraitRequest) status.textContent = exportError(error);
+  }
+});
+get("remove-portrait").addEventListener("click", () => {
+  ++portraitRequest;
+  if (uploadedPortrait) URL.revokeObjectURL(uploadedPortrait.url);
+  uploadedPortrait = null;
+  const radio = portraitChoices.querySelector('[value="upload"]');
+  if (radio.checked) portraitChoices.querySelector('[value=""]').checked = true;
+  radio.disabled = true;
+  get("remove-portrait").hidden = true;
+  get("portrait-status").textContent = "选中头像即可预览。上传 JPG、PNG 或 WebP，可在「调整人物」中调整取景。";
+  updatePortrait();
+});
+
+async function loadPortrait(portrait) {
+  if (!portrait) return null;
+  return {...portrait,image:portrait.image ?? await loadImage("portrait:"+portrait.id,portrait.path)};
+}
+
 get("pick-file").addEventListener("click", () => uploadInput.click());
 uploadInput.addEventListener("change", async () => {
   const file = uploadInput.files[0];
@@ -329,12 +469,12 @@ function paintTarot(ctx,image,w,h) {
   ctx.restore();
 }
 
-function loadImage(id) {
+function loadImage(id, path = artUrl(id)) {
   if (images.has(id)) return images.get(id);
   const image = new Image();
   // Request readable pixels even when the page runs in a sandboxed browser frame.
   image.crossOrigin = "anonymous";
-  const source = new URL(artUrl(id),document.baseURI);
+  const source = new URL(path,document.baseURI);
   const localFile = source.protocol === "file:";
   const promise = new Promise((resolve,reject) => {
     image.onload = () => resolve(image);
@@ -345,7 +485,7 @@ function loadImage(id) {
     };
   });
   images.set(id,promise);
-  image.src = localFile ? new URL("art/" + id + ".jpg",siteUrl).href : source.href;
+  image.src = localFile ? new URL(path,siteUrl).href : source.href;
   return promise;
 }
 
@@ -460,6 +600,8 @@ function paint(target, image, recipe, withText) {
   ctx.fillStyle = shade;
   ctx.fillRect(0,0,w,h);
 
+  portraits.draw(ctx,recipe.portrait,w,h);
+
   if (withText) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -487,14 +629,19 @@ function toggleText() {
 
 async function render() {
   const version = ++state.renderId;
-  const recipe = wallpaper.build({...state.input, variation:state.variation});
+  const input = state.input;
+  const withText = state.withText;
+  const recipe = wallpaper.build({...input, variation:state.variation});
   get("download-status").textContent = "正在合成壁纸…";
   download.removeAttribute("href");
-  const image = recipe.upload?.image ?? await loadImage(recipe.art.id);
+  const [image,portrait] = await Promise.all([
+    recipe.upload?.image ?? loadImage(recipe.art.id),loadPortrait(input.portrait),
+  ]);
+  recipe.portrait = portrait;
   if (version !== state.renderId) return;
-  paint(canvas,image,recipe,state.withText);
+  paint(canvas,image,recipe,withText);
   state.recipe = recipe;
-  get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.star?.label,recipe.element?.label,
+  get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.portrait?.name,recipe.star?.label,recipe.element?.label,
     state.variation && recipe.upload ? recipe.variation.name : ""].filter(Boolean).join(" · ");
   const details = get("result-details");
   details.replaceChildren(...recipe.details.map(value => {
@@ -508,7 +655,7 @@ async function render() {
   get("variation-count").textContent = recipe.upload ? "" : (state.variation+1) + " / " + count;
   get("result-title").textContent = recipe.phrase;
   get("result-reason").textContent = recipe.reason;
-  canvas.setAttribute("aria-label", recipe.name + "锁屏壁纸，" + recipe.phrase);
+  canvas.setAttribute("aria-label", [recipe.name+"锁屏壁纸",recipe.portrait?.name,recipe.phrase].filter(Boolean).join("，"));
   canvas.toBlob(blob => {
     if (version !== state.renderId) return;
     if (!blob) {
@@ -518,7 +665,7 @@ async function render() {
     if (state.url) URL.revokeObjectURL(state.url);
     state.url = URL.createObjectURL(blob);
     download.href = state.url;
-    download.download = "好运锁屏-" + recipe.name + "-" + recipe.art.name + (state.withText ? "-有字" : "-无字") + ".png";
+    download.download = "好运锁屏-" + recipe.name + "-" + recipe.art.name + (recipe.portrait ? "-"+recipe.portrait.name : "") + (withText ? "-有字" : "-无字") + ".png";
     get("download-status").textContent = "PNG · 1080 × 2400";
   },"image/png");
 }
@@ -530,7 +677,7 @@ function showRenderError(error) {
 function readInput() {
   const values = new FormData(form);
   return {
-    theme:values.get("theme"), style:values.get("style"), wish:values.get("wish"), reference:values.get("reference"),
+    portrait:readPortrait(), theme:values.get("theme"), style:values.get("style"), wish:values.get("wish"), reference:values.get("reference"),
     upload:values.get("reference") === "upload" && uploaded ? {image:uploaded.image,crop:Number(get("crop").value)/100} : null,
   };
 }
@@ -590,6 +737,7 @@ async function previewSuggestion() {
     const input = {...suggestion.input,personal:{...suggestion.personal,element:get("suggestion-element").value}};
     const recipe = wallpaper.build({...input,variation:0});
     const image = recipe.upload?.image ?? await loadImage(recipe.art.id);
+    recipe.portrait = await loadPortrait(input.portrait);
     if (version !== suggestionVersion) return;
     paint(get("suggestion-preview"),image,recipe,false);
     summary.textContent = "底图「" + recipe.art.name + "」。" + (recipe.details.join("") || "你可以仅按心愿生成。");
