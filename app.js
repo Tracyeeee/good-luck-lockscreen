@@ -159,6 +159,127 @@ for (const person of [...portraits.people,{id:"upload",name:"我的头像",note:
   label.append(title,note);
   portraitChoices.append(label);
 }
+
+let activePortraitId = "";
+let portraitGesture = null;
+let portraitFrame = null;
+const portraitEdits = new Map();
+
+function syncPortraitEditor() {
+  const selected=state.recipe?.portrait ?? [];
+  const editor=get("portrait-editor");
+  const outline=get("portrait-selection");
+  editor.hidden=!selected.length;
+  canvas.dataset.editable=String(Boolean(selected.length));
+  if(!selected.some(person => person.id===activePortraitId)) activePortraitId=selected[0]?.id ?? "";
+  const target=get("portrait-target");
+  const key=selected.map(person => person.id).join(",");
+  if(target.dataset.people!==key) {
+    target.replaceChildren(...selected.map(person => new Option(person.name+" · "+(person.note || "自己上传"),person.id)));
+    target.dataset.people=key;
+  }
+  target.value=activePortraitId;
+  const edit=portraitEdits.get(activePortraitId) ?? {x:0,y:0,scale:1};
+  get("portrait-individual-size").value=Math.round(edit.scale*100);
+  get("portrait-scale-value").textContent=Math.round(edit.scale*100)+"%";
+  const box=portraits.geometry(selected,canvas.width,canvas.height).find(box => box.person.id===activePortraitId);
+  outline.hidden=!box;
+  if(!box) return;
+  const left=Math.max(0,box.x),top=Math.max(0,box.y);
+  const right=Math.min(canvas.width,box.x+box.width),bottom=Math.min(canvas.height,box.y+box.height);
+  outline.hidden=right<=left || bottom<=top;
+  outline.style.left=(left/canvas.width*100)+"%";
+  outline.style.top=(top/canvas.height*100)+"%";
+  outline.style.width=((right-left)/canvas.width*100)+"%";
+  outline.style.height=((bottom-top)/canvas.height*100)+"%";
+  get("portrait-scale-handle").setAttribute("aria-label","拖动缩放"+box.person.name);
+}
+
+function previewPortraitEdit() {
+  state.input={...state.input,portrait:readPortrait()};
+  if(portraitFrame!==null) return;
+  portraitFrame=requestAnimationFrame(() => {
+    portraitFrame=null;
+    render({exportImage:false}).catch(showRenderError);
+  });
+}
+
+function finishPortraitEdit() {
+  if(portraitFrame!==null) cancelAnimationFrame(portraitFrame);
+  portraitFrame=null;
+  updatePortrait();
+}
+
+function startPortraitGesture(event, resize) {
+  if(event.button!==0 || portraitGesture) return;
+  const rect=canvas.getBoundingClientRect();
+  const point={x:(event.clientX-rect.left)/rect.width*canvas.width,y:(event.clientY-rect.top)/rect.height*canvas.height};
+  const selected=state.recipe?.portrait ?? [];
+  const box=resize ? portraits.geometry(selected,canvas.width,canvas.height).find(box => box.person.id===activePortraitId)
+    : portraits.hitTest(selected,canvas.width,canvas.height,point.x,point.y);
+  if(!box) return;
+  activePortraitId=box.person.id;
+  const edit=portraitEdits.get(activePortraitId) ?? {x:0,y:0,scale:1};
+  portraitGesture={pointerId:event.pointerId,source:event.currentTarget,resize,rect,box,edit:{...edit},
+    clientX:event.clientX,clientY:event.clientY,point};
+  event.currentTarget.setPointerCapture(event.pointerId);
+  event.preventDefault();
+  syncPortraitEditor();
+}
+
+function movePortraitGesture(event) {
+  const gesture=portraitGesture;
+  if(!gesture || event.pointerId!==gesture.pointerId) return;
+  const dx=(event.clientX-gesture.clientX)/gesture.rect.width;
+  const dy=(event.clientY-gesture.clientY)/gesture.rect.height;
+  const next={...gesture.edit};
+  if(gesture.resize) {
+    const centerX=gesture.box.x+gesture.box.width/2,centerY=gesture.box.y+gesture.box.height/2;
+    const original=Math.hypot(gesture.point.x-centerX,gesture.point.y-centerY);
+    const current=Math.hypot(gesture.point.x+dx*canvas.width-centerX,gesture.point.y+dy*canvas.height-centerY);
+    next.scale=Math.max(.4,Math.min(2.5,gesture.edit.scale*current/Math.max(1,original)));
+  } else {
+    next.x=Math.max(-1,Math.min(1,gesture.edit.x+dx));
+    next.y=Math.max(-1,Math.min(1,gesture.edit.y+dy));
+  }
+  portraitEdits.set(activePortraitId,next);
+  previewPortraitEdit();
+  event.preventDefault();
+}
+
+function endPortraitGesture(event) {
+  if(!portraitGesture || event.pointerId!==portraitGesture.pointerId) return;
+  const source=portraitGesture.source;
+  portraitGesture=null;
+  if(source.hasPointerCapture(event.pointerId)) source.releasePointerCapture(event.pointerId);
+  finishPortraitEdit();
+}
+
+canvas.addEventListener("pointerdown",event => startPortraitGesture(event,false));
+get("portrait-scale-handle").addEventListener("pointerdown",event => startPortraitGesture(event,true));
+for(const target of [canvas,get("portrait-scale-handle")]) {
+  target.addEventListener("pointermove",movePortraitGesture);
+  target.addEventListener("pointerup",endPortraitGesture);
+  target.addEventListener("pointercancel",endPortraitGesture);
+  target.addEventListener("lostpointercapture",endPortraitGesture);
+}
+get("portrait-target").addEventListener("change",event => {
+  activePortraitId=event.target.value;
+  syncPortraitEditor();
+});
+get("portrait-individual-size").addEventListener("input",event => {
+  if(!activePortraitId) return;
+  const edit=portraitEdits.get(activePortraitId) ?? {x:0,y:0,scale:1};
+  portraitEdits.set(activePortraitId,{...edit,scale:Number(event.target.value)/100});
+  get("portrait-scale-value").textContent=event.target.value+"%";
+  previewPortraitEdit();
+});
+get("portrait-individual-size").addEventListener("change",finishPortraitEdit);
+get("portrait-individual-reset").addEventListener("click",() => {
+  portraitEdits.delete(activePortraitId);
+  finishPortraitEdit();
+});
+
 for (const [id,layout] of Object.entries(portraits.layouts)) get("portrait-layout").add(new Option(layout.name,id));
 
 function readPortrait() {
@@ -167,7 +288,7 @@ function readPortrait() {
     if (!checkbox.checked) return [];
     const person = id === "upload" ? uploadedPortrait : portraits.people.find(person => person.id === id);
     if (!person) return [];
-    return [{...person,layout:get("portrait-layout").value,size:Number(get("portrait-size").value),
+    return [{...person,transform:portraitEdits.get(id),layout:get("portrait-layout").value,size:Number(get("portrait-size").value),
       opacity:Number(get("portrait-opacity").value),x:Number(get("portrait-x").value),y:Number(get("portrait-y").value)}];
   });
 }
@@ -230,6 +351,7 @@ get("portrait-layout").addEventListener("change", () => {
 });
 for (const key of ["x","y","size","opacity"]) get("portrait-"+key).addEventListener("input",updatePortrait);
 get("portrait-reset").addEventListener("click", () => {
+  portraitEdits.clear();
   get("portrait-layout").value = "group";
   resetPortrait();
   updatePortrait();
@@ -254,6 +376,7 @@ get("portrait-file").addEventListener("change", async () => {
     const image = await personCutout.extract(original);
     if (request !== portraitRequest) { URL.revokeObjectURL(url); return; }
     if (uploadedPortrait) URL.revokeObjectURL(uploadedPortrait.url);
+    portraitEdits.delete("upload");
     uploadedPortrait = {id:"upload",name:"我的头像",image,url,ready:true};
     const checkbox = portraitChoices.querySelector('[value="upload"]');
     checkbox.disabled = false;
@@ -667,7 +790,7 @@ function toggleText() {
   get("without-text").setAttribute("aria-pressed", String(!state.withText));
 }
 
-async function render() {
+async function render({exportImage = true} = {}) {
   const version = ++state.renderId;
   const input = state.input;
   const withText = state.withText;
@@ -681,6 +804,7 @@ async function render() {
   if (version !== state.renderId) return;
   paint(canvas,image,recipe,withText);
   state.recipe = recipe;
+  syncPortraitEditor();
   get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.portrait.map(person => person.name).join("、"),recipe.star?.label,recipe.element?.label,
     state.variation && recipe.upload ? recipe.variation.name : ""].filter(Boolean).join(" · ");
   const details = get("result-details");
@@ -696,6 +820,7 @@ async function render() {
   get("result-title").textContent = recipe.phrase;
   get("result-reason").textContent = recipe.reason;
   canvas.setAttribute("aria-label", [recipe.name+"锁屏壁纸",recipe.portrait.map(person => person.name).join("、"),recipe.phrase].filter(Boolean).join("，"));
+  if (!exportImage) return;
   canvas.toBlob(blob => {
     if (version !== state.renderId) return;
     if (!blob) {

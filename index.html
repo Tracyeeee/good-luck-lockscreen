@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#121021">
 <meta name="description" content="选择你的心愿，生成一张专属手机锁屏。">
 <title>好运锁屏 · 为此刻的心愿做一张壁纸</title>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 <script src="vendor/lunar.js" defer></script>
 <script src="bazi.js?v=3" defer></script>
 <script src="wallpaper.js?v=5" defer></script>
 <script src="person-cutout.js?v=10" defer></script>
-<script src="portraits.js?v=10" defer></script>
-<script src="app.js?v=10" defer></script>
+<script src="portraits.js?v=11" defer></script>
+<script src="app.js?v=11" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -140,8 +140,17 @@
         <div class="phone-stage">
           <div class="phone">
             <canvas id="canvas" width="1080" height="2400" role="img" aria-label="生成的手机壁纸"></canvas>
+            <div id="portrait-selection" class="portrait-selection" hidden><button id="portrait-scale-handle" type="button" aria-label="拖动缩放选中的人物">↘</button></div>
             <div class="phone-overlay" aria-hidden="true"><div class="island"></div><div class="phone-date" id="phone-date"></div><div class="phone-time">09:41</div><div class="home-bar"></div></div>
           </div>
+        </div>
+        <div id="portrait-editor" class="portrait-editor" hidden>
+          <label for="portrait-target">单独调整人物</label>
+          <select id="portrait-target" aria-label="选择要调整的人物"></select>
+          <label for="portrait-individual-size">人物缩放 <output id="portrait-scale-value">100%</output></label>
+          <input id="portrait-individual-size" type="range" min="40" max="250" value="100">
+          <button id="portrait-individual-reset" class="button quiet" type="button">恢复此人物</button>
+          <p class="field-note">点选并拖动预览中的人物。拖右下角或调整滑块可缩放。</p>
         </div>
         <div class="result-info" aria-live="polite">
           <div id="result-tags" class="result-tags"></div>

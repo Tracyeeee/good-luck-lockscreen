@@ -113,35 +113,79 @@ const portraits = (() => {
     sky:{name:"天空浮像",x:50,y:58,size:65,opacity:65},
   };
 
-  function draw(ctx, selected, width, height) {
-    if (!selected?.length) return;
+
+  // Head widths align the faces. Clothing below each neckline fills the lower edge.
+  const framing = {
+    kris:{faceX:.44,faceWidth:.52,bodyStart:.78},
+    robert:{faceX:.46,faceWidth:.55,bodyStart:.78},
+    "robert-wish":{faceX:.50,faceWidth:.62,bodyStart:.82},
+    reference:{faceX:.51,faceWidth:.66,bodyStart:.74},
+    liu:{faceX:.57,faceWidth:.57,bodyStart:.88},
+    yang:{faceX:.51,faceWidth:.55,bodyStart:.88},
+    malfoy:{faceX:.51,faceWidth:.62,bodyStart:.76},
+  };
+
+  function geometry(selected, width, height) {
+    if (!selected?.length) return [];
     const settings=selected[0];
     const columns=Math.min(selected.length,3);
     const rows=Math.ceil(selected.length/columns);
-    const groupWidth=width*settings.size/100;
-    const slotWidth=groupWidth/columns;
+    const isGroup=settings.layout==="group";
+    const groupScale=settings.size/125;
     const centerX=width*settings.x/100;
-    const bottom=height*settings.y/100;
-    const baseHeight=Math.min(height*.66,height*.68/rows);
-    const drawOrder=[...selected.keys()].sort((a,b) => {
-      const center=(columns-1)/2;
-      return Math.abs(b%columns-center)-Math.abs(a%columns-center);
-    });
-    ctx.save();
-    ctx.globalAlpha=settings.opacity/100;
-    for(const index of drawOrder) {
-      const person=selected[index];
+    const baseBottom=height*settings.y/100;
+    return selected.map((person,index) => {
       const image=person.image;
+      const frame=framing[person.id] ?? {faceX:.5,faceWidth:.65,bodyStart:.78};
       const row=Math.floor(index/columns);
-      const itemsInRow=Math.min(columns,selected.length-row*columns);
-      const spacing=width*(columns===2 ? .50 : .30);
-      const x=centerX+(index%columns-(itemsInRow-1)/2)*spacing;
-      const scale=Math.min(slotWidth*1.9/image.width,baseHeight/image.height)*(person.scale ?? 1);
-      const w=image.width*scale,h=image.height*scale;
-      const y=bottom-(rows-1-row)*baseHeight*.85;
-      ctx.drawImage(image,x-w/2,y-h,w,h);
+      const count=Math.min(columns,selected.length-row*columns);
+      const slot=width/count;
+      const faceWidth=Math.min(slot*.94,width*.48)*groupScale;
+      const scale=faceWidth/(image.width*frame.faceWidth);
+      const edit=person.transform ?? {x:0,y:0,scale:1};
+      const zoom=edit.scale ?? 1;
+      const drawWidth=image.width*scale*zoom;
+      const naturalHeight=image.height*scale*zoom;
+      const x=centerX+(index%columns-(count-1)/2)*slot;
+      const desiredHeight=isGroup ? height*.51/rows*groupScale : image.height*scale;
+      const rowStep=isGroup ? height*.48/rows*groupScale : Math.min(height*.3,naturalHeight*.82);
+      const top=baseBottom-(rows-1-row)*rowStep-(isGroup ? desiredHeight : naturalHeight);
+      const drawHeight=Math.max(naturalHeight,desiredHeight*zoom);
+      const y=top+(isGroup ? (1-zoom)*desiredHeight*.35 : 0);
+      const headHeight=image.height*frame.bodyStart*scale*zoom;
+      const order=Math.abs(index%columns-(count-1)/2);
+      return {person,index,order,x:x-drawWidth*frame.faceX+(edit.x ?? 0)*width,
+        y:y+(edit.y ?? 0)*height,width:drawWidth,height:drawHeight,headHeight,
+        bodyStart:frame.bodyStart,opacity:settings.opacity/100};
+    }).sort((a,b) => Math.floor(a.index/columns)-Math.floor(b.index/columns) || b.order-a.order);
+  }
+
+  function draw(ctx, selected, width, height) {
+    for(const box of geometry(selected,width,height)) {
+      const image=box.person.image;
+      const sourceTop=image.height*box.bodyStart;
+      ctx.save();
+      ctx.globalAlpha=box.opacity;
+      ctx.drawImage(image,0,0,image.width,sourceTop,box.x,box.y,box.width,box.headHeight);
+      ctx.drawImage(image,0,sourceTop,image.width,image.height-sourceTop,
+        box.x,box.y+box.headHeight,box.width,box.height-box.headHeight);
+      ctx.restore();
     }
-    ctx.restore();
+  }
+
+  function hitTest(selected,width,height,x,y) {
+    const boxes=geometry(selected,width,height);
+    for(const box of boxes.reverse()) {
+      if(x<box.x || x>box.x+box.width || y<box.y || y>box.y+box.height) continue;
+      const image=box.person.image;
+      const sx=Math.min(image.width-1,Math.max(0,Math.floor((x-box.x)/box.width*image.width)));
+      const localY=y-box.y;
+      const sy=localY<box.headHeight ? localY/box.headHeight*image.height*box.bodyStart
+        : image.height*box.bodyStart+(localY-box.headHeight)/(box.height-box.headHeight)*image.height*(1-box.bodyStart);
+      const pixel=image.getContext("2d").getImageData(sx,Math.min(image.height-1,Math.max(0,Math.floor(sy))),1,1).data;
+      if(pixel[3]>35) return box;
+    }
+    return null;
   }
 
   function thumbnail(canvas, image) {
@@ -154,5 +198,5 @@ const portraits = (() => {
     ctx.drawImage(image,(100-w)/2,100-h,w,h);
   }
 
-  return {people,layouts,draw,thumbnail};
+  return {people,layouts,geometry,draw,hitTest,thumbnail};
 })();
