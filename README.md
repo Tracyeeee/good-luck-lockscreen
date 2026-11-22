@@ -67,8 +67,10 @@
 
 [随附的 lunar-javascript 1.7.8](https://github.com/6tail/lunar-javascript/tree/5c92e62c904ba5cc0b62f032796aeef433702268)以 MIT 许可随附在 `vendor/`。节气使用 UTC+8 口径，日柱与时柱使用出生地民用时间，晚子日柱按当天。出生时区由用户选择，夏令时重复或不存在的钟表时间可改用生日建议。只填生日用公历当日日干。填写时间后，以月支加权及旺衰阈值给出简化扶抑候选五行，参考[规则声明](https://github.com/qilaidev/metaphysics-engine/blob/0536f4e12ea8dbc3f81263e7f5d9170109789e84/backend/constants/rulings.js)。中和及疑似从格、专旺格返回空候选。星座及五行只在用户确认后用于生成，出生资料在浏览器内计算。
 
-## 显化人物
+## 显化超级加强版
 
-「加入显化人物」默认折叠，提供 Kris、罗伯特、刘亦菲、杨超越、马尔福的常用头像，共 6 个版本。支持与全部底图及自传底图组合，也可单独上传自己的 JPG、PNG、WebP 头像。头像在浏览器内处理，可调整构图、大小、左右及上下位置、透明度与取景。选择人物会立即更新预览，切换文字、底图和心愿时继续带入所选人物。
+人物可多选，按选择顺序编号并自动同框，支持整组大小、位置、透明度调整。可将常用人物和自己上传的人物与全部底图组合。内置人物均为透明素材，网页按完整比例叠加，三人默认同排、中心人物在前。
 
-人物以圆形拼贴呈现，保留取景范围内的原始背景和文字。马尔福使用福字图中的角色头像。[人物图片与分享出处](art/people/README.md)。
+用户上传的照片在浏览器内自动去除背景，透明 PNG 可直接使用。人像模型仅首次按需加载。图库、文字开关、换底图和个人配图建议均支持多人物合成，导出 1080 × 2400 PNG。[人物来源与处理方式](art/people/README.md)。
+
+[MediaPipe Selfie Segmentation](https://chuoling.github.io/mediapipe/solutions/selfie_segmentation.html) 0.1.1675465747 随附在 vendor/selfie-segmentation，以 Apache 2.0 许可提供。

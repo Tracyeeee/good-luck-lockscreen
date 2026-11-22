@@ -118,28 +118,37 @@ function readUpload(url) {
 }
 
 
+
 let uploadedPortrait = null;
 let portraitRequest = 0;
+let portraitOrder = [];
 const portraitChoices = get("portrait-choices");
-for (const person of [{id:"",name:"不添加",note:"仅使用底图"},...portraits.people,{id:"upload",name:"我的头像",note:"自己上传"}]) {
+const clearPortraits = document.createElement("button");
+clearPortraits.id = "portrait-clear";
+clearPortraits.type = "button";
+clearPortraits.className = "portrait-choice";
+clearPortraits.textContent = "清空人物";
+portraitChoices.append(clearPortraits);
+for (const person of [...portraits.people,{id:"upload",name:"我的头像",note:"自己上传"}]) {
   const label = document.createElement("label");
   label.className = "portrait-choice";
-  const radio = document.createElement("input");
-  radio.type = "radio";
-  radio.name = "portrait";
-  radio.value = person.id;
-  radio.checked = !person.id;
-  radio.disabled = person.id === "upload";
-  label.append(radio);
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.name = "portrait";
+  checkbox.value = person.id;
+  checkbox.disabled = person.id === "upload";
+  label.append(checkbox);
+  const order = document.createElement("b");
+  order.className = "portrait-order";
+  order.hidden = true;
+  label.append(order);
   if (person.path) {
     const thumb = document.createElement("canvas");
     thumb.width = 100;
     thumb.height = 100;
     thumb.setAttribute("aria-hidden","true");
     label.append(thumb);
-    loadImage("portrait:"+person.id,person.path).then(image => {
-      portraits.thumbnail(thumb,image,person);
-    }).catch(() => {
+    loadPerson(person).then(result => portraits.thumbnail(thumb,result.image)).catch(() => {
       thumb.hidden = true;
     });
   }
@@ -153,29 +162,35 @@ for (const person of [{id:"",name:"不添加",note:"仅使用底图"},...portrai
 for (const [id,layout] of Object.entries(portraits.layouts)) get("portrait-layout").add(new Option(layout.name,id));
 
 function readPortrait() {
-  const id = new FormData(form).get("portrait");
-  if (!id) return null;
-  const person = id === "upload" ? uploadedPortrait : portraits.people.find(person => person.id === id);
-  if (!person) return null;
-  return {...person,layout:get("portrait-layout").value,size:Number(get("portrait-size").value),
-    opacity:Number(get("portrait-opacity").value),x:Number(get("portrait-x").value),
-    y:Number(get("portrait-y").value),focus:Number(get("portrait-focus").value)};
+  return portraitOrder.flatMap(id => {
+    const checkbox = portraitChoices.querySelector('[value="'+id+'"]');
+    if (!checkbox.checked) return [];
+    const person = id === "upload" ? uploadedPortrait : portraits.people.find(person => person.id === id);
+    if (!person) return [];
+    return [{...person,layout:get("portrait-layout").value,size:Number(get("portrait-size").value),
+      opacity:Number(get("portrait-opacity").value),x:Number(get("portrait-x").value),y:Number(get("portrait-y").value)}];
+  });
 }
 
 function showPortraitSelection() {
-  const portrait = readPortrait();
-  get("portrait-adjust").hidden = !portrait;
-  get("portrait-summary").textContent = portrait ? portrait.name+" · "+(portrait.note || "自己上传") : "选填 · 常用头像或自己上传";
+  const selected = readPortrait();
+  get("portrait-adjust").hidden = !selected.length;
+  get("portrait-summary").textContent = selected.length ? "已选 "+selected.length+" 人 · 按选择顺序同框" : "多选人物 · 自动抠图同框";
+  for (const checkbox of portraitChoices.querySelectorAll("input")) {
+    const badge=checkbox.parentElement.querySelector(".portrait-order");
+    badge.hidden=!checkbox.checked;
+    badge.textContent=String(portraitOrder.indexOf(checkbox.value)+1);
+  }
   const credit = get("portrait-credit");
   credit.replaceChildren();
-  credit.hidden = !portrait?.source;
-  if (portrait?.source) {
+  credit.hidden = !selected.some(person => person.source);
+  for (const person of selected.filter(person => person.source)) {
     const link = document.createElement("a");
-    link.href = portrait.source;
+    link.href = person.source;
     link.target = "_blank";
     link.rel = "noopener";
-    link.textContent = "头像出处 · "+portrait.credit;
-    credit.append(link);
+    link.textContent = person.name+" · "+person.credit;
+    credit.append(link,document.createElement("br"));
   }
 }
 
@@ -183,28 +198,39 @@ function updatePortrait() {
   showPortraitSelection();
   state.input = {...state.input,portrait:readPortrait()};
   get("preview-status").textContent = "预览";
+  get("portrait-status").textContent = portraitOrder.length ? "正在抠图并合成人物，首次加载需要片刻…" : "可多选人物，按选择顺序排列。";
   clearSuggestion();
-  render().catch(showRenderError);
+  render().then(() => {
+    get("portrait-status").textContent = "可多选人物，按选择顺序排列。";
+  }).catch(error => {
+    get("portrait-status").textContent=exportError(error);
+    showRenderError(error);
+  });
 }
 
 function resetPortrait() {
   const layout = portraits.layouts[get("portrait-layout").value];
   for (const key of ["x","y","size","opacity"]) get("portrait-"+key).value = layout[key];
-  get("portrait-focus").value = "0";
 }
 
-portraitChoices.addEventListener("change", () => {
-  get("portrait-layout").value = "side";
-  resetPortrait();
+portraitChoices.addEventListener("change", event => {
+  const checkbox=event.target;
+  if (checkbox.checked) portraitOrder.push(checkbox.value);
+  else portraitOrder=portraitOrder.filter(id => id!==checkbox.value);
+  updatePortrait();
+});
+clearPortraits.addEventListener("click", () => {
+  for(const input of portraitChoices.querySelectorAll("input")) input.checked=false;
+  portraitOrder=[];
   updatePortrait();
 });
 get("portrait-layout").addEventListener("change", () => {
   resetPortrait();
   updatePortrait();
 });
-for (const key of ["x","y","size","opacity","focus"]) get("portrait-"+key).addEventListener("input",updatePortrait);
+for (const key of ["x","y","size","opacity"]) get("portrait-"+key).addEventListener("input",updatePortrait);
 get("portrait-reset").addEventListener("click", () => {
-  get("portrait-layout").value = "side";
+  get("portrait-layout").value = "group";
   resetPortrait();
   updatePortrait();
 });
@@ -220,20 +246,27 @@ get("portrait-file").addEventListener("change", async () => {
     return;
   }
   const url = URL.createObjectURL(file);
-  status.textContent = "正在读取头像…";
+  status.textContent = "正在读取照片并自动抠图…";
   try {
-    const image = await readUpload(url);
+    const original = await readUpload(url);
     if (request !== portraitRequest) { URL.revokeObjectURL(url); return; }
-    if (image.naturalWidth*image.naturalHeight > 60000000) throw new Error("图片尺寸过大，请缩小后重试。");
+    if (original.naturalWidth*original.naturalHeight > 60000000) throw new Error("图片尺寸过大，请缩小后重试。");
+    const image = await personCutout.extract(original);
+    if (request !== portraitRequest) { URL.revokeObjectURL(url); return; }
     if (uploadedPortrait) URL.revokeObjectURL(uploadedPortrait.url);
-    uploadedPortrait = {id:"upload",name:"我的头像",image,url};
-    const radio = portraitChoices.querySelector('[value="upload"]');
-    radio.disabled = false;
-    radio.checked = true;
+    uploadedPortrait = {id:"upload",name:"我的头像",image,url,ready:true};
+    const checkbox = portraitChoices.querySelector('[value="upload"]');
+    checkbox.disabled = false;
+    checkbox.checked = true;
+    if (!portraitOrder.includes("upload")) portraitOrder.push("upload");
+    let thumb=checkbox.parentElement.querySelector("canvas");
+    if(!thumb) {
+      thumb=document.createElement("canvas");
+      thumb.setAttribute("aria-hidden","true");
+      checkbox.parentElement.insertBefore(thumb,checkbox.parentElement.querySelector("span"));
+    }
+    portraits.thumbnail(thumb,image);
     get("remove-portrait").hidden = false;
-    status.textContent = "已选用我的头像。可在「调整人物」中调整取景。";
-    get("portrait-layout").value = "side";
-    resetPortrait();
     updatePortrait();
   } catch (error) {
     URL.revokeObjectURL(url);
@@ -244,17 +277,24 @@ get("remove-portrait").addEventListener("click", () => {
   ++portraitRequest;
   if (uploadedPortrait) URL.revokeObjectURL(uploadedPortrait.url);
   uploadedPortrait = null;
-  const radio = portraitChoices.querySelector('[value="upload"]');
-  if (radio.checked) portraitChoices.querySelector('[value=""]').checked = true;
-  radio.disabled = true;
+  portraitOrder=portraitOrder.filter(id => id!=="upload");
+  const checkbox = portraitChoices.querySelector('[value="upload"]');
+  checkbox.checked=false;
+  checkbox.disabled=true;
+  checkbox.parentElement.querySelector("canvas")?.remove();
   get("remove-portrait").hidden = true;
-  get("portrait-status").textContent = "选中头像即可预览。上传 JPG、PNG 或 WebP，可在「调整人物」中调整取景。";
   updatePortrait();
 });
 
-async function loadPortrait(portrait) {
-  if (!portrait) return null;
-  return {...portrait,image:portrait.image ?? await loadImage("portrait:"+portrait.id,portrait.path)};
+async function loadPerson(person) {
+  if(person.ready) return person;
+  const original = person.image ?? await loadImage("portrait:"+person.id,person.path);
+  const image = await personCutout.extract(original,person.crop,person.path);
+  return {...person,image,ready:true};
+}
+
+function loadPortrait(selected) {
+  return Promise.all((selected ?? []).map(loadPerson));
 }
 
 get("pick-file").addEventListener("click", () => uploadInput.click());
@@ -641,7 +681,7 @@ async function render() {
   if (version !== state.renderId) return;
   paint(canvas,image,recipe,withText);
   state.recipe = recipe;
-  get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.portrait?.name,recipe.star?.label,recipe.element?.label,
+  get("result-tags").textContent = [recipe.name,recipe.art.name,recipe.portrait.map(person => person.name).join("、"),recipe.star?.label,recipe.element?.label,
     state.variation && recipe.upload ? recipe.variation.name : ""].filter(Boolean).join(" · ");
   const details = get("result-details");
   details.replaceChildren(...recipe.details.map(value => {
@@ -655,7 +695,7 @@ async function render() {
   get("variation-count").textContent = recipe.upload ? "" : (state.variation+1) + " / " + count;
   get("result-title").textContent = recipe.phrase;
   get("result-reason").textContent = recipe.reason;
-  canvas.setAttribute("aria-label", [recipe.name+"锁屏壁纸",recipe.portrait?.name,recipe.phrase].filter(Boolean).join("，"));
+  canvas.setAttribute("aria-label", [recipe.name+"锁屏壁纸",recipe.portrait.map(person => person.name).join("、"),recipe.phrase].filter(Boolean).join("，"));
   canvas.toBlob(blob => {
     if (version !== state.renderId) return;
     if (!blob) {
@@ -665,7 +705,7 @@ async function render() {
     if (state.url) URL.revokeObjectURL(state.url);
     state.url = URL.createObjectURL(blob);
     download.href = state.url;
-    download.download = "好运锁屏-" + recipe.name + "-" + recipe.art.name + (recipe.portrait ? "-"+recipe.portrait.name : "") + (withText ? "-有字" : "-无字") + ".png";
+    download.download = "好运锁屏-" + recipe.name + "-" + recipe.art.name + (recipe.portrait.length ? "-"+recipe.portrait.map(person => person.name).join("+") : "") + (withText ? "-有字" : "-无字") + ".png";
     get("download-status").textContent = "PNG · 1080 × 2400";
   },"image/png");
 }

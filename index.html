@@ -6,12 +6,13 @@
 <meta name="theme-color" content="#121021">
 <meta name="description" content="选择你的心愿，生成一张专属手机锁屏。">
 <title>好运锁屏 · 为此刻的心愿做一张壁纸</title>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 <script src="vendor/lunar.js" defer></script>
 <script src="bazi.js?v=3" defer></script>
 <script src="wallpaper.js?v=5" defer></script>
-<script src="portraits.js?v=9" defer></script>
-<script src="app.js?v=9" defer></script>
+<script src="person-cutout.js?v=10" defer></script>
+<script src="portraits.js?v=10" defer></script>
+<script src="app.js?v=10" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -74,24 +75,23 @@
           </div>
         </details>
         <details id="portrait-options" class="options">
-          <summary>加入显化人物 <small id="portrait-summary">选填 · 常用头像或自己上传</small></summary>
+          <summary>显化超级加强版 <small id="portrait-summary">多选人物 · 自动抠图同框</small></summary>
           <div class="options-body">
-            <div id="portrait-choices" class="portrait-choices" role="group" aria-label="选择显化人物"></div>
+            <div id="portrait-choices" class="portrait-choices" role="group" aria-label="多选显化人物"></div>
             <div class="portrait-upload">
               <button id="pick-portrait" type="button" class="button quiet">上传我的头像</button>
               <input id="portrait-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
               <button id="remove-portrait" type="button" class="button quiet" hidden>移除上传头像</button>
             </div>
-            <p id="portrait-status" class="field-note" role="status">选中头像即可预览。上传 JPG、PNG 或 WebP，可在「调整人物」中调整取景。</p>
+            <p id="portrait-status" class="field-note" role="status">可多选人物，按选择顺序排列。上传照片会在浏览器内自动去除背景。</p>
             <details id="portrait-adjust" class="options" hidden>
-              <summary>调整人物</summary>
+              <summary>调整同框构图</summary>
               <div class="options-body">
                 <div class="field"><label for="portrait-layout">构图</label><select id="portrait-layout"></select></div>
-                <div class="field"><label for="portrait-size">大小</label><input id="portrait-size" type="range" min="18" max="60" value="42"></div>
-                <div class="field"><label for="portrait-x">左右位置</label><input id="portrait-x" type="range" min="0" max="100" value="25"></div>
-                <div class="field"><label for="portrait-y">上下位置</label><input id="portrait-y" type="range" min="25" max="80" value="65"></div>
+                <div class="field"><label for="portrait-size">人物整体大小</label><input id="portrait-size" type="range" min="35" max="180" value="125"></div>
+                <div class="field"><label for="portrait-x">整体左右位置</label><input id="portrait-x" type="range" min="0" max="100" value="50"></div>
+                <div class="field"><label for="portrait-y">整体上下位置</label><input id="portrait-y" type="range" min="35" max="110" value="100"></div>
                 <div class="field"><label for="portrait-opacity">透明度</label><input id="portrait-opacity" type="range" min="20" max="100" value="100"></div>
-                <div class="field"><label for="portrait-focus">头像取景</label><input id="portrait-focus" type="range" min="0" max="100" value="0"></div>
                 <button id="portrait-reset" type="button" class="button quiet">恢复推荐构图</button>
               </div>
             </details>

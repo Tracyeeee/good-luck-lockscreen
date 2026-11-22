@@ -1,12 +1,26 @@
-# 常用显化人物素材
+# 透明人物素材
 
-以下图片来自本项目调研中核对的分享帖或报道，保留原下载文件。显示时按 portraits.js 内的 crop 参数取头像区域，再进行圆形拼贴。来源链接用于记录分享出处，未核实每张二创的最初作者或额外授权。
+显化超级加强版支持人物多选，按选择顺序自动同框，默认将人物排在底部。所有人物素材使用透明 PNG，绘制时保留人物完整比例。
 
-- [Kris Jenner · 浴袍经典版](kris.png)，浪潮工作室／新浪转载。[分享出处](https://finance.sina.com.cn/wm/2026-04-17/doc-inhuuptn1119149.shtml)。
-- [罗伯特·帕丁森 · 浴袍事业版](robert.jpg)，季节限定sally 分享帖。[分享出处](https://weibo.com/2/detail/5366623797774263)。
-- [罗伯特·帕丁森 · I GET EVERYTHING I WANT](robert-wish.jpg)，季节限定sally 分享帖。[分享出处](https://weibo.com/2/detail/5366623797774263)。
-- [刘亦菲 · 蓝衬衫捧花版](liu.jpg)，娱酷／新浪分享。[分享出处](https://k.sina.com.cn/article_1310754317_4e20860d040019z3k.html)。
-- [杨超越 · 紫衣合掌锦鲤版](yang.jpg)，陌上客旅行／搜狐。[分享出处](https://www.sohu.com/a/252378917_700913)。
-- [马尔福 · 福字角色头像](malfoy.png)，科普中国／央视转载。[分享出处](https://kepu.cctv.cn/2026/02/12/ARTINRtFVpMGJg3lfZ9Lzy09260212.shtml)。
+原始分享出处延续原图库记录。
 
-马尔福使用福字实物参考图中的角色头像取景。人物自带的原始背景和文字随取景保留。
+- [Kris Jenner · 浴袍经典版](kris-cutout.png)，[分享或报道出处](https://finance.sina.com.cn/wm/2026-04-17/doc-inhuuptn1119149.shtml)。
+- [罗伯特 · 浴袍事业版](robert-cutout.png)，[分享或报道出处](https://weibo.com/2/detail/5366623797774263)。
+- [罗伯特 · 经典特写版](robert-wish-cutout.png)，[分享或报道出处](https://weibo.com/2/detail/5366623797774263)。
+- [刘亦菲 · 蓝衬衫捧花版](liu-cutout.png)，[分享或报道出处](https://k.sina.com.cn/article_1310754317_4e20860d040019z3k.html)。
+- [杨超越 · 紫衣合掌版](yang-cutout.png)，[分享或报道出处](https://www.sohu.com/a/252378917_700913)。
+- [马尔福 · 角色版](malfoy-cutout.png)，[分享或报道出处](https://kepu.cctv.cn/2026/02/12/ARTINRtFVpMGJg3lfZ9Lzy09260212.shtml)。
+- [参考图中间人物](reference-cutout.png)，来自用户提供的三人同框参考图。
+
+Kris 使用网页本地 MediaPipe 分割结果缓存。其他透明人物使用内置 ImageGen 从所列原图中提取，可能存在边缘修补。保留原始文件以供核对，来源链接记录的是分享出处，未核实每张二创的最初作者或额外授权。
+
+用户上传照片在浏览器中使用 MediaPipe 自动分割人物，透明 PNG 直接保留透明度。人像模型随站点提供，仅首次抠图时按需加载，上传的图片不发送到服务器。复杂背景及头发边缘的处理精度依赖照片，识别失败会提示用户重试。
+
+## ImageGen 提示词
+
+- `robert-cutout.png` — Edit the provided image into a clean photographic person cutout asset for wallpaper compositing. Extract only the large Robert Pattinson in the foreground, including his exact head, hair and visible white bathrobe upper body. Completely remove China Zun, skyline and sky from behind him. Preserve his facial features, expression and hair faithfully. Keep realistic photographic texture and original identity, not an illustration or a different photograph. All areas outside the silhouette must be genuinely transparent alpha, including spaces between hair, arms, shoulders and objects. No circle, no badge, no rectangular background, no white or grey matte, no shadow or glow. Frame the existing head and upper body fully within a tight portrait canvas with a small transparent margin. Keep existing visible credits if they overlap the retained subject.
+- `robert-wish-cutout.png` — Edit the provided image into a clean photographic person cutout asset for wallpaper compositing. Extract only Robert Pattinson's head, hair, neck and visible upper torso from this reference. Remove the glitter background and the slogan lettering. Preserve the source facial features, pose and expression faithfully. Repair the hair naturally where the design's lettering covers it. Keep realistic photographic texture and original identity, not an illustration or a different photograph. All areas outside the silhouette must be genuinely transparent alpha, including spaces between hair, arms, shoulders and objects. No circle, no badge, no rectangular background, no white or grey matte, no shadow or glow. Frame the existing head and upper body fully within a tight portrait canvas with a small transparent margin. Keep existing visible credits if they overlap the retained subject.
+- `liu-cutout.png` — Edit the provided image into a clean photographic person cutout asset for wallpaper compositing. Extract only Liu Yifei with her exact long hair, green hairband, blue shirt, hands and the pink rose bouquet she is holding. Preserve the full bouquet and her embrace. Remove all wooden room and lattice background. Preserve her source face, pose and expression faithfully. Keep realistic photographic texture and original identity, not an illustration or a different photograph. All areas outside the silhouette must be genuinely transparent alpha, including spaces between hair, arms, shoulders and objects. No circle, no badge, no rectangular background, no white or grey matte, no shadow or glow. Frame the existing head and upper body fully within a tight portrait canvas with a small transparent margin. Keep existing visible credits if they overlap the retained subject.
+- `yang-cutout.png` — Edit the provided image into a clean photographic person cutout asset for wallpaper compositing. Extract only Yang Chaoyue in her purple blouse, her head, hair, earrings, shoulders and clasped hands. Remove every part of the golden halo, rays, orange sky and cloud background. Preserve her exact source face, closed eyes and hand pose. Keep realistic photographic texture and original identity, not an illustration or a different photograph. All areas outside the silhouette must be genuinely transparent alpha, including spaces between hair, arms, shoulders and objects. No circle, no badge, no rectangular background, no white or grey matte, no shadow or glow. Frame the existing head and upper body fully within a tight portrait canvas with a small transparent margin. Keep existing visible credits if they overlap the retained subject.
+- `malfoy-cutout.png` — Please extract the larger foreground printed portrait on the red paper as a transparent PNG subject cutout. Retain only the photographed portrait's visible head, hair, neck, white shirt, necktie and dark school robe. Remove all red paper around the portrait and all surrounding hands, desk, plants and room. Preserve the supplied photograph's appearance. Tight portrait canvas, genuinely transparent outside the silhouette, no circle or frame.
+- `reference-cutout.png` — Edit target is the provided three-person composite. Extract only the person standing in the CENTER, the young dark-haired person in a white bathrobe. Preserve that exact face, expression, dark hair and visible robe. Remove the two adults on the left and right, all skyline, building, sky and surroundings. Isolate the center person's head, neck, shoulders and upper body as a clean realistic photograph cutout on genuinely transparent alpha, with small transparent margins. Do not include any part of either neighboring person's head, body or clothing. Preserve the identity and pose, no new styling, no text, no circle, no border, no glow or shadow. Reconstruct the small robe regions obscured by neighboring people only as needed to produce a continuous upper-body cutout.
